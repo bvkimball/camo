@@ -26,6 +26,7 @@
     "type": "git",
     "url": "git@github.com:scottwrobinson/camo.git"
   },
+  "main": "lib/index.js",
   "license": "MIT",
   "scripts": {
     "compile": "babel --stage 0 -d lib/ src/ && babel --stage 0 --ignore 'test/fixtures/*' -d test-dist/ test/",

@@ -1,5 +1,3 @@
-"use strict";
-
 import './lib/proxyShim';
 
 export * from './lib/db';
