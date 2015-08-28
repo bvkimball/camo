@@ -1,10 +1,10 @@
 "use strict";
 
-var BaseDocument = require('./base-document');
+import { BaseDocument } from './base-document';
 
 class EmbeddedDocument extends BaseDocument {
-	constructor() {
-		super();
+    constructor() {
+        super();
     }
 
     // TODO: Is there a way to tell if a class is
@@ -19,7 +19,7 @@ class EmbeddedDocument extends BaseDocument {
     }
 
     toData() {
-    	return this._values;
+        return this._values;
     }
 }
 

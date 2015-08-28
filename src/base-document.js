@@ -1,8 +1,8 @@
 "use strict";
 
 import _ from 'lodash';
-import {Connection as DB} from './db';
-import {isSupportedType,isValidType,isInChoices,isArray,isDocument,isEmbeddedDocument,isString,isNumber} from './validate';
+import { Connection as DB } from './db';
+import { isSupportedType, isValidType, isInChoices, isArray, isDocument, isEmbeddedDocument, isString, isNumber} from './validate';
 
 var normalizeType = function(property) {
     // TODO: Only copy over stuff we support

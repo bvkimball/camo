@@ -1,13 +1,9 @@
 "use strict";
 
 import _ from 'lodash';
-import {Connection as DB} from './db';
-var BaseDocument = require('./base-document');
-var isSupportedType = require('./validate').isSupportedType;
-var isArray = require('./validate').isArray;
-var isReferenceable = require('./validate').isReferenceable;
-var isEmbeddedDocument = require('./validate').isEmbeddedDocument;
-var isString = require('./validate').isString;
+import { Connection as DB } from './db';
+import { BaseDocument } from './base-document';
+import { isSupportedType, isReferenceable, isArray, isEmbeddedDocument, isString } from './validate';
 
 class Document extends BaseDocument {
 	constructor(name) {
