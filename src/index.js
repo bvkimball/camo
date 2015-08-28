@@ -1,5 +1,5 @@
-import './lib/proxyShim';
+import './proxyShim';
 
-export * from './lib/db';
-export * from './lib/document';
-export * from './lib/embedded-document';
+export * from './db';
+export * from './document';
+export * from './embedded-document';
