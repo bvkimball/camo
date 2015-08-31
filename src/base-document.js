@@ -20,49 +20,6 @@ var normalizeType = function(property) {
     return typeDeclaration;
 };
 
-// For more handler methods:
-// https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Proxy
-
-let schemaProxyHandler = {
-    get: function(target, propKey, receiver) {
-        // Return current value, if set
-        if (propKey in target._values) {
-            return target._values[propKey];
-        }
-
-        // Alias 'id' and '_id'
-        if (propKey === 'id') {
-            return target._values._id;
-        }
-
-        return Reflect.get(target, propKey, receiver);
-    },
-
-    set: function(target, propKey, value, receiver) {
-        if (propKey in target._schema) {
-            target._values[propKey] = value;
-            return true;
-        }
-
-        // Alias 'id' and '_id'
-        if (propKey === 'id') {
-            target._values._id = value;
-            return true;
-        }
-
-        return Reflect.set(target, propKey, value, receiver);
-    },
-
-    deleteProperty: function(target, propKey) {
-        delete target._schema[propKey];
-        delete target._values[propKey];
-        return true;
-    },
-
-    has: function(target, propKey) {
-        return propKey in target._schema || Reflect.has(target, propKey);
-    }
-};
 
 export class BaseDocument {
 	constructor() {
@@ -121,28 +78,53 @@ export class BaseDocument {
     // TODO : EMBEDDED
     // Need to share this with embedded
     generateSchema() {
-        var that = this;
-
-        _.keys(this).forEach(function(k) {
+        _.keys(this).forEach((k) => {
             // Ignore private variables
             if (_.startsWith(k, '_')) {
                 return;
             }
 
             // Normalize the type format
-            that._schema[k] = normalizeType(that[k]);
+            this._schema[k] = normalizeType(this[k]);
 
             // Assign a default if needed
-            if (isArray(that._schema[k].type)) {
-                that._values[k] = that.getDefault(k) || [];
+            if (isArray(this._schema[k].type)) {
+                this._values[k] = this.getDefault(k) || [];
             } else {
-                that._values[k] = that.getDefault(k);
+                this._values[k] = this.getDefault(k);
             }
-
-            // Should we delete these member variables so they
-            // don't get in the way? Probably a waste of time
-            // since the Proxy intercepts all gets/sets to them.
-            //delete that[k];
+            
+            this._proxy(k);
+        });
+    }
+    
+    _proxy(field){
+        Object.defineProperty(this, field, {
+            get: function() {
+                // Return current value, if set
+                if (field in this._values) {
+                    return this._values[field];
+                }
+                // Alias 'id' and '_id'
+                if (field === 'id') {
+                    return this._values._id;
+                }
+                return this[field];
+            },
+            set: function(value) {
+                if (field in this._schema) {
+                    this._values[field] = value;
+                    return true;
+                }
+                // Alias 'id' and '_id'
+                if (field === 'id') {
+                    this._values._id = value;
+                    return true;
+                }
+                return false;
+            },
+            configurable: true,
+            enumerable: true
         });
     }
 
@@ -233,7 +215,7 @@ export class BaseDocument {
     static _instantiate() {
         var instance = new this();
         instance.generateSchema();
-        return new Proxy(instance, schemaProxyHandler);
+        return instance;
     }
 
     // TODO: Should probably move some of this to 
@@ -292,7 +274,7 @@ export class BaseDocument {
     static populate(docs) {
         if (!docs) return Promise.all([]);
 
-        var documents = null;
+        let documents = null;
 
         if (!isArray(docs)) {
             documents = [docs];
@@ -304,13 +286,12 @@ export class BaseDocument {
 
         // Load all 1-level-deep references
         // First, find all unique keys needed to be loaded...
-        var keys = [];
+        let keys = [];
 
         // TODO: Bad assumption: Not all documents in the database will have the same schema...
         // Hmm, if this is true, thats an error on the user. Right?
-        var anInstance = documents[0];
-
-        _.keys(anInstance._schema).forEach(function(key) {
+        let anInstance = documents[0];
+        _.keys(anInstance._schema).forEach( (key) => {
             // Handle array of references (ex: { type: [MyObject] })
             if (isArray(anInstance._schema[key].type) &&
                 anInstance._schema[key].type.length > 0 &&
@@ -334,7 +315,7 @@ export class BaseDocument {
         //          '1039da': ['lj0adf', 'k2jha']
         //      }
         //}
-        var ids = {};
+        let ids = {};
         keys.forEach(function(k) {
             ids[k] = {};
             documents.forEach(function(d) {
@@ -347,7 +328,7 @@ export class BaseDocument {
                 }
             });
         });
-
+        
         // TODO: Is this really the most efficient
         // way to do this? Maybe make a master list
         // of all objects that need to be loaded (separated
@@ -356,9 +337,9 @@ export class BaseDocument {
         // go?
 
         // ...then for each array of ids, load them all...
-        var loadPromises = [];
+        let loadPromises = [];
         _.keys(ids).forEach(function(key) {
-            var keyIds = [];
+            let keyIds = [];
             _.keys(ids[key]).forEach(function(k) {
                 // Before adding to list, we convert id to the
                 // backend database's native ID format.
@@ -369,7 +350,7 @@ export class BaseDocument {
             keyIds = _.unique(keyIds);
 
             // Handle array of references (like [MyObject])
-            var type = null;
+            let type = null;
             if (isArray(anInstance._schema[key].type)) {
                 type = anInstance._schema[key].type[0];
             } else {
@@ -377,14 +358,14 @@ export class BaseDocument {
             }
 
             // Bulk load dereferences
-            var p = type.loadMany({ '_id': { $in: keyIds } }, { populate: false })
+            let p = type.loadMany({ '_id': { $in: keyIds } }, { populate: false })
             .then(function(dereferences) {
                 // Assign each dereferenced object to parent
 
                 _.keys(ids[key]).forEach(function(k) {
                     // TODO: Replace with documents.find when able
                     // Find the document to assign the derefs to
-                    var doc;
+                    let doc;
                     documents.forEach(function(d) {
                         if (DB().toCanonicalId(d.id) === k) doc = d;
                     });
@@ -394,7 +375,7 @@ export class BaseDocument {
                     ids[key][k].forEach(function(id) {
                         // TODO: Replace with dereferences.find when able
                         // Find the right dereference
-                        var deref;
+                        let deref;
                         dereferences.forEach(function(d) {
                             if (DB().toCanonicalId(d.id) === DB().toCanonicalId(id)) deref = d;
                         });
@@ -410,7 +391,7 @@ export class BaseDocument {
 
             loadPromises.push(p);
         });
-
+        
         // ...and finally execute all promises and return our
         // fully loaded documents.
         return Promise.all(loadPromises).then(function() {

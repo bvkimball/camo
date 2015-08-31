@@ -1,58 +1,58 @@
 import _ from 'lodash';
 import {Connection as DB} from './db';
 
-var isString = function(s) {
+export function isString(s) {
 	return _.isString(s);
 };
 
-var isNumber = function(n) {
+export function isNumber(n) {
     return _.isNumber(n) && _.isFinite(n) && !isString(n);
 };
 
-var isBoolean = function(b) {
+export function isBoolean(b) {
 	return _.isBoolean(b);
 };
 
-var isDate = function(d) {
+export function isDate(d) {
 	return isNumber(d) || _.isDate(d);
 };
 
-var isBuffer = function(b) {
+export function isBuffer(b) {
 	return typeof b === 'object' || b instanceof Buffer;
 };
 
-var isObject = function(o) {
+export function isObject(o) {
 	return _.isObject(o);
 };
 
-var isArray = function(a) {
+export function isArray(a) {
 	return _.isArray(a);
 };
 
-var isDocument = function(m) {
+export function isDocument(m) {
     return m && m.documentClass && m.documentClass() === 'document';
 };
 
-var isEmbeddedDocument = function(e) {
+export function isEmbeddedDocument(e) {
     return e && e.documentClass && e.documentClass() === 'embedded';
 };
 
-var isReferenceable = function(r) {
+export function isReferenceable(r) {
     return isDocument(r) || isNativeId(r);
 };
 
-var isNativeId = function(n) {
+export function isNativeId(n) {
     return DB().isNativeId(n);
 };
 
-var isSupportedType = function(t) {
+export function isSupportedType(t) {
     return (t === String || t === Number || t === Boolean ||
             t === Buffer || t === Date || t === Array ||
             isArray(t) || t === Object || t instanceof Object ||
             typeof(t.documentClass) === 'function');
 };
 
-var isType = function(value, type) {
+export function isType(value, type) {
     if (type === String) {
         return isString(value);
     } else if (type === Number) {
@@ -78,7 +78,7 @@ var isType = function(value, type) {
     }
 };
 
-var isValidType = function(value, type) {
+export function isValidType(value, type) {
     // NOTE
     // Maybe look at this: 
     // https://github.com/Automattic/mongoose/tree/master/lib/types
@@ -110,14 +110,14 @@ var isValidType = function(value, type) {
     return isType(value, type);
 };
 
-var isInChoices = function(choices, choice) {
+export function isInChoices(choices, choice) {
 	if (!choices) {
 		return true;
 	}
 	return choices.indexOf(choice) > -1;
 };
 
-export {
+export default {
     isString,
     isNumber,
     isBoolean,

@@ -5,7 +5,7 @@ import { Connection as DB } from './db';
 import { BaseDocument } from './base-document';
 import { isSupportedType, isReferenceable, isArray, isEmbeddedDocument, isString } from './validate';
 
-class Document extends BaseDocument {
+export class Document extends BaseDocument {
 	constructor(name) {
         super();
 
@@ -217,26 +217,23 @@ class Document extends BaseDocument {
 
     // TODO: Need options to specify whether references should be loaded
     static loadOne(query, options) {
-        var that = this;
-
         var populate = true;
         if (options && options.hasOwnProperty('populate')) {
             populate = options.populate;
         }
 
         return DB().loadOne(this.collectionName(), query)
-        .then(function(data) {
+        .then( (data) => {
             if (!data) {
                 return null;
             }
 
-            var doc = that._fromData(data);
+            var doc = this._fromData(data);
             if (populate) {
-                return that.populate(doc);
+                return this.populate(doc);
             }
-
             return doc;
-        }).then(function(docs) {
+        }).then((docs) => {
             if (docs) {
                 return docs;
             }
@@ -349,5 +346,3 @@ class Document extends BaseDocument {
     }
     
 }
-
-module.exports = Document;

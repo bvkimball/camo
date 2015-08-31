@@ -2,7 +2,7 @@
 
 import { BaseDocument } from './base-document';
 
-class EmbeddedDocument extends BaseDocument {
+export class EmbeddedDocument extends BaseDocument {
     constructor() {
         super();
     }
@@ -22,5 +22,3 @@ class EmbeddedDocument extends BaseDocument {
         return this._values;
     }
 }
-
-module.exports = EmbeddedDocument;
