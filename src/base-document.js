@@ -96,6 +96,7 @@ export class BaseDocument {
             
             this._proxy(k);
         });
+        this._proxy('id');
     }
     
     _proxy(field){
