@@ -105,6 +105,11 @@ export class BaseDocument {
                 // Return current value, if set
                 if (field in this._values) {
                     return this._values[field];
+                } else if (field in this._schema) {
+                    let f = this._schema[field];
+                    if( 'default' in f){
+                        return f.default;
+                    }
                 }
                 // Alias 'id' and '_id'
                 if (field === 'id') {
