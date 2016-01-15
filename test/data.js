@@ -1,10 +1,10 @@
 "use strict";
 
-var Document = require('../index').Document;
+import { Document } from '../src/index';
 
-class Data extends Document {
-	constructor() {
-        super('data');
+export class Data extends Document {
+    constructor() {
+        super();
 
         this.schema({
             number: {
@@ -30,5 +30,3 @@ class Data extends Document {
         });
     }
 }
-
-module.exports = Data;

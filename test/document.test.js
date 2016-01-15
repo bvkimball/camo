@@ -1,17 +1,13 @@
 "use strict";
 
-var _ = require('lodash');
-var fs = require('fs');
-var expect = require('chai').expect;
-var connect = require('../index').connect;
-var Document = require('../index').Document;
-var isDocument = require('../lib/validate').isDocument;
-var Data = require('./data');
-var getData1 = require('./util').data1;
-var getData2 = require('./util').data2;
-var validateId = require('./util').validateId;
-var fail = require('./util').fail;
-var expectError = require('./util').expectError;
+import _ from 'lodash';
+import fs from 'fs';
+import { expect } from 'chai';
+import { Database, Document } from '../src/index';
+import { Data } from './data';
+import { getData1, getData2, fail, validateId, expectError } from './util';
+import { isDocument } from '../src/validate';
+import { ValidationError } from '../src/errors';
 
 describe('Document', function() {
 
@@ -21,7 +17,7 @@ describe('Document', function() {
     var database = null;
 
     before(function(done) {
-        connect(url).then(function(db) {
+        Database.connect(url).then(function(db) {
             database = db;
             return database.dropDatabase();
         }).then(function() {
@@ -37,16 +33,16 @@ describe('Document', function() {
         database.dropDatabase().then(function() {}).then(done, done);
     });
 
-    /*after(function(done) {
+    after(function(done) {
         database.dropDatabase().then(function() {}).then(done, done);
-    });*/
+    });
 
     describe('instantiation', function() {
         it('should allow creation of instance', function(done) {
 
             class User extends Document {
                 constructor() {
-                    super('user');
+                    super();
                     this.firstName = String;
                     this.lastName = String;
                 }
@@ -65,7 +61,7 @@ describe('Document', function() {
 
             class User extends Document {
                 constructor() {
-                    super('user');
+                    super();
 
                     this.schema({
                         firstName: String,
@@ -87,7 +83,7 @@ describe('Document', function() {
 
             class User extends Document {
                 constructor() {
-                    super('user');
+                    super();
                     this.firstName = String;
                     this.lastName = String;
                     this.nicknames = [String];
@@ -106,7 +102,7 @@ describe('Document', function() {
             expect(user.nicknames).to.include('Bill');
             expect(user.nicknames).to.include('William');
             expect(user.nicknames).to.include('Will');
-            
+
             done();
         });
 
@@ -114,14 +110,14 @@ describe('Document', function() {
 
             class Coffee extends Document {
                 constructor() {
-                    super('coffee');
+                    super();
                     this.temp = Number;
                 }
             }
 
             class User extends Document {
                 constructor() {
-                    super('user');
+                    super();
                     this.drinks = [Coffee];
                 }
             }
@@ -130,7 +126,9 @@ describe('Document', function() {
             coffee.temp = 105;
 
             coffee.save().then(function() {
-                var user = User.create({ drinks: [coffee] });
+                var user = User.create({
+                    drinks: [coffee]
+                });
                 expect(user.drinks).to.have.length(1);
             }).then(done, done);
         });
@@ -141,7 +139,7 @@ describe('Document', function() {
 
             class User extends Document {
                 constructor() {
-                    super('user');
+                    super();
                     this.firstName = String;
                     this.lastName = String;
                 }
@@ -165,7 +163,7 @@ describe('Document', function() {
 
             class User extends Document {
                 constructor() {
-                    super('user');
+                    super();
                     this.firstName = String;
                     this.lastName = String;
                 }
@@ -195,7 +193,7 @@ describe('Document', function() {
 
             class User extends Document {
                 constructor() {
-                    super('user');
+                    super();
                     this.firstName = String;
                     this.lastName = String;
                 }
@@ -227,7 +225,7 @@ describe('Document', function() {
 
             class ProUser extends User {
                 constructor() {
-                    super('prouser');
+                    super();
                     this.paymentMethod = String;
                 }
             }
@@ -259,7 +257,7 @@ describe('Document', function() {
 
             class Motorcycle extends Vehicle {
                 constructor() {
-                    super('motorcycles');
+                    super();
                     this.numWheels = {
                         type: Number,
                         default: 2
@@ -274,6 +272,64 @@ describe('Document', function() {
                 expect(bike.numWheels).to.be.equal(2);
             }).then(done, done);
         });
+
+        it('should provide default collection name based on class name', function(done) {
+
+            class User extends Document {
+                constructor() {
+                    super();
+                }
+            }
+
+            var user = User.create();
+
+            expect(user.collectionName()).to.be.equal('users');
+            expect(User.collectionName()).to.be.equal('users');
+
+            done();
+        });
+
+        it('should provide default collection name based on subclass name', function(done) {
+
+            class User extends Document {
+                constructor() {
+                    super();
+                }
+            }
+
+            class ProUser extends User {
+                constructor() {
+                    super();
+                }
+            }
+
+            var pro = ProUser.create();
+
+            expect(pro.collectionName()).to.be.equal('prousers');
+            expect(ProUser.collectionName()).to.be.equal('prousers');
+
+            done();
+        });
+
+        it('should allow custom collection name', function(done) {
+
+            class User extends Document {
+                constructor() {
+                    super();
+                }
+
+                static collectionName() {
+                    return 'sheeple';
+                }
+            }
+
+            var user = User.create();
+
+            expect(user.collectionName()).to.be.equal('sheeple');
+            expect(User.collectionName()).to.be.equal('sheeple');
+
+            done();
+        });
     });
 
     describe('types', function() {
@@ -281,16 +337,26 @@ describe('Document', function() {
 
             class ReferenceeModel extends Document {
                 constructor() {
-                    super('referencee1');
+                    super();
                     this.str = String;
+                }
+
+                static collectionName() {
+                    return 'referencee1';
                 }
             }
 
             class ReferencerModel extends Document {
                 constructor() {
-                    super('referencer1');
+                    super();
                     this.ref = ReferenceeModel;
-                    this.num = { type: Number };
+                    this.num = {
+                        type: Number
+                    };
+                }
+
+                static collectionName() {
+                    return 'referencer1';
                 }
             }
 
@@ -304,11 +370,13 @@ describe('Document', function() {
                 return data.save();
             }).then(function() {
                 validateId(data);
-                return ReferencerModel.loadOne({ num: 1 });
+                return ReferencerModel.loadOne({
+                    num: 1
+                });
             }).then(function(d) {
                 validateId(d);
                 validateId(d.ref);
-                expect(d.ref instanceof ReferenceeModel).to.be.true;
+                expect(d.ref).to.be.an.instanceof(ReferenceeModel);
                 expect(d.ref.str).to.be.equal('some data');
             }).then(done, done);
         });
@@ -317,16 +385,28 @@ describe('Document', function() {
 
             class ReferenceeModel extends Document {
                 constructor() {
-                    super('referencee2');
-                    this.schema({ str: { type: String } });
+                    super();
+                    this.schema({
+                        str: {
+                            type: String
+                        }
+                    });
+                }
+
+                static collectionName() {
+                    return 'referencee2';
                 }
             }
 
             class ReferencerModel extends Document {
                 constructor() {
-                    super('referencer2');
+                    super();
                     this.refs = [ReferenceeModel];
                     this.num = Number;
+                }
+
+                static collectionName() {
+                    return 'referencer2';
                 }
             }
 
@@ -345,13 +425,15 @@ describe('Document', function() {
                 return data.save();
             }).then(function() {
                 validateId(data);
-                return ReferencerModel.loadOne({ num: 1 });
+                return ReferencerModel.loadOne({
+                    num: 1
+                });
             }).then(function(d) {
                 validateId(d);
                 validateId(d.refs[0]);
                 validateId(d.refs[1]);
-                expect(d.refs[0] instanceof ReferenceeModel).to.be.true;
-                expect(d.refs[1] instanceof ReferenceeModel).to.be.true;
+                expect(d.refs[0]).to.be.an.instanceof(ReferenceeModel);
+                expect(d.refs[1]).to.be.an.instanceof(ReferenceeModel);
                 expect(d.refs[0].str).to.be.equal('string1');
                 expect(d.refs[1].str).to.be.equal('string2');
             }).then(done, done);
@@ -360,17 +442,27 @@ describe('Document', function() {
         it('should allow references to be saved using the object or its id', function(done) {
             class ReferenceeModel extends Document {
                 constructor() {
-                    super('referencee3');
+                    super();
                     this.str = String;
+                }
+
+                static collectionName() {
+                    return 'referencee3';
                 }
             }
 
             class ReferencerModel extends Document {
                 constructor() {
-                    super('referencer3');
+                    super();
                     this.ref1 = ReferenceeModel;
                     this.ref2 = ReferenceeModel;
-                    this.num = { type: Number };
+                    this.num = {
+                        type: Number
+                    };
+                }
+
+                static collectionName() {
+                    return 'referencer3';
                 }
             }
 
@@ -389,10 +481,12 @@ describe('Document', function() {
                 return ref2.save();
             }).then(function() {
                 validateId(ref2);
-                data.ref2 = ref2.id;
+                data.ref2 = ref2._id;
                 return data.save();
             }).then(function() {
-                return ReferencerModel.loadOne({num: 1});
+                return ReferencerModel.loadOne({
+                    num: 1
+                });
             }).then(function(d) {
                 validateId(d.ref1);
                 validateId(d.ref2);
@@ -404,16 +498,28 @@ describe('Document', function() {
         it('should allow array of references to be saved using the object or its id', function(done) {
             class ReferenceeModel extends Document {
                 constructor() {
-                    super('referencee4');
-                    this.schema({ str: { type: String } });
+                    super();
+                    this.schema({
+                        str: {
+                            type: String
+                        }
+                    });
+                }
+
+                static collectionName() {
+                    return 'referencee4';
                 }
             }
 
             class ReferencerModel extends Document {
                 constructor() {
-                    super('referencer4');
+                    super();
                     this.refs = [ReferenceeModel];
                     this.num = Number;
+                }
+
+                static collectionName() {
+                    return 'referencer4';
                 }
             }
 
@@ -432,10 +538,12 @@ describe('Document', function() {
                 return ref2.save();
             }).then(function() {
                 validateId(ref2);
-                data.refs.push(ref2.id);
+                data.refs.push(ref2._id);
                 return data.save();
             }).then(function() {
-                return ReferencerModel.loadOne({num: 1});
+                return ReferencerModel.loadOne({
+                    num: 1
+                });
             }).then(function(d) {
                 validateId(d.refs[0]);
                 validateId(d.refs[1]);
@@ -447,7 +555,7 @@ describe('Document', function() {
 
             class Employee extends Document {
                 constructor() {
-                    super('employee');
+                    super();
                     this.name = String;
                     this.boss = Boss;
                 }
@@ -455,9 +563,13 @@ describe('Document', function() {
 
             class Boss extends Document {
                 constructor() {
-                    super('boss');
+                    super();
                     this.salary = Number;
                     this.employees = [Employee];
+                }
+
+                static collectionName() {
+                    return 'bosses';
                 }
             }
 
@@ -485,7 +597,9 @@ describe('Document', function() {
                 validateId(boss.employees[0]);
                 validateId(boss.employees[0].boss);
 
-                return Boss.loadOne({ salary: 10000000 });
+                return Boss.loadOne({
+                    salary: 10000000
+                });
             }).then(function(b) {
                 // If we had an issue with an infinite loop
                 // of loading circular dependencies then the
@@ -509,8 +623,12 @@ describe('Document', function() {
 
             class StringModel extends Document {
                 constructor() {
-                    super('strings');
-                    this.schema({ str: { type: String } });
+                    super();
+                    this.schema({
+                        str: {
+                            type: String
+                        }
+                    });
                 }
             }
 
@@ -527,8 +645,16 @@ describe('Document', function() {
 
             class NumberModel extends Document {
                 constructor() {
-                    super('numbers1');
-                    this.schema({ num: { type: Number } });
+                    super();
+                    this.schema({
+                        num: {
+                            type: Number
+                        }
+                    });
+                }
+
+                static collectionName() {
+                    return 'numbers1';
                 }
             }
 
@@ -545,8 +671,12 @@ describe('Document', function() {
 
             class BooleanModel extends Document {
                 constructor() {
-                    super('booleans');
-                    this.schema({ bool: { type: Boolean } });
+                    super();
+                    this.schema({
+                        bool: {
+                            type: Boolean
+                        }
+                    });
                 }
             }
 
@@ -563,8 +693,12 @@ describe('Document', function() {
 
             class DateModel extends Document {
                 constructor() {
-                    super('dates');
-                    this.schema({ date: { type: Date } });
+                    super();
+                    this.schema({
+                        date: {
+                            type: Date
+                        }
+                    });
                 }
             }
 
@@ -582,13 +716,19 @@ describe('Document', function() {
 
             class ObjectModel extends Document {
                 constructor() {
-                    super('objects');
-                    this.schema({ obj: { type: Object } });
+                    super();
+                    this.schema({
+                        obj: {
+                            type: Object
+                        }
+                    });
                 }
             }
 
             var data = ObjectModel.create();
-            data.obj = { hi: 'bye'};
+            data.obj = {
+                hi: 'bye'
+            };
 
             data.save().then(function() {
                 validateId(data);
@@ -601,8 +741,12 @@ describe('Document', function() {
 
             class BufferModel extends Document {
                 constructor() {
-                    super('buffers');
-                    this.schema({ buf: { type: Buffer } });
+                    super();
+                    this.schema({
+                        buf: {
+                            type: Buffer
+                        }
+                    });
                 }
             }
 
@@ -619,8 +763,12 @@ describe('Document', function() {
 
             class ArrayModel extends Document {
                 constructor() {
-                    super('arrays');
-                    this.schema({ arr: { type: Array } });
+                    super();
+                    this.schema({
+                        arr: {
+                            type: Array
+                        }
+                    });
                 }
             }
 
@@ -640,8 +788,12 @@ describe('Document', function() {
 
             class ArrayModel extends Document {
                 constructor() {
-                    super('arrays');
-                    this.schema({ arr: { type: [String] } });
+                    super();
+                    this.schema({
+                        arr: {
+                            type: [String]
+                        }
+                    });
                 }
             }
 
@@ -661,8 +813,16 @@ describe('Document', function() {
 
             class NumberModel extends Document {
                 constructor() {
-                    super('numbers2');
-                    this.schema({ num: { type: Number } });
+                    super();
+                    this.schema({
+                        num: {
+                            type: Number
+                        }
+                    });
+                }
+
+                static collectionName() {
+                    return 'numbers2';
                 }
             }
 
@@ -672,7 +832,7 @@ describe('Document', function() {
             data.save().then(function() {
                 expect.fail(null, Error, 'Expected error, but got none.');
             }).catch(function(error) {
-                expect(error instanceof Error).to.be.true;
+                expect(error).to.be.instanceof(ValidationError);
             }).then(done, done);
         });
 
@@ -680,8 +840,12 @@ describe('Document', function() {
 
             class ArrayModel extends Document {
                 constructor() {
-                    super('arrays');
-                    this.schema({ arr: { type: [String] } });
+                    super();
+                    this.schema({
+                        arr: {
+                            type: [String]
+                        }
+                    });
                 }
             }
 
@@ -691,7 +855,7 @@ describe('Document', function() {
             data.save().then(function() {
                 expect.fail(null, Error, 'Expected error, but got none.');
             }).catch(function(error) {
-                expect(error instanceof Error).to.be.true;
+                expect(error).to.be.instanceof(ValidationError);
             }).then(done, done);
         });
     });
@@ -716,6 +880,36 @@ describe('Document', function() {
                 expect(data.date).to.be.lessThan(Date.now());
             }).then(done, done);
         });
+
+        it('should be undefined if unassigned and no default is given', function(done) {
+
+            class Person extends Document {
+                constructor() {
+                    super();
+                    this.name = String;
+                    this.age = Number;
+                }
+
+                static collectionName() {
+                    return 'people';
+                }
+            }
+
+            var person = Person.create({
+                name: 'Scott'
+            });
+
+            person.save().then(function() {
+                validateId(person);
+                return Person.loadOne({
+                    name: 'Scott'
+                });
+            }).then(function(p) {
+                validateId(p);
+                expect(p.name).to.be.equal('Scott');
+                expect(p.age).to.be.undefined;
+            }).then(done, done);
+        });
     });
 
     describe('choices', function() {
@@ -738,7 +932,7 @@ describe('Document', function() {
             data.save().then(function() {
                 expect.fail(null, Error, 'Expected error, but got none.');
             }).catch(function(error) {
-                expect(error instanceof Error).to.be.true;
+                expect(error).to.be.instanceof(ValidationError);
             }).then(done, done);
         });
     });
@@ -774,7 +968,7 @@ describe('Document', function() {
             data.save().then(function() {
                 expect.fail(null, Error, 'Expected error, but got none.');
             }).catch(function(error) {
-                expect(error instanceof Error).to.be.true;
+                expect(error).to.be.instanceof(ValidationError);
             }).then(done, done);
         });
     });
@@ -810,7 +1004,7 @@ describe('Document', function() {
             data.save().then(function() {
                 expect.fail(null, Error, 'Expected error, but got none.');
             }).catch(function(error) {
-                expect(error instanceof Error).to.be.true;
+                expect(error).to.be.instanceof(ValidationError);
             }).then(done, done);
         });
     });
@@ -820,7 +1014,7 @@ describe('Document', function() {
 
             class Product extends Document {
                 constructor() {
-                    super('products');
+                    super();
                     this.name = String;
                     this.cost = {
                         type: String,
@@ -844,7 +1038,7 @@ describe('Document', function() {
 
             class Product extends Document {
                 constructor() {
-                    super('products');
+                    super();
                     this.name = String;
                     this.cost = {
                         type: String,
@@ -865,6 +1059,441 @@ describe('Document', function() {
         });
     });
 
+    describe('validate', function() {
+        it('should accept value that passes custom validator', function(done) {
+
+            class Person extends Document {
+                constructor() {
+                    super();
+
+                    this.name = {
+                        type: String,
+                        validate: function(value) {
+                            return value.length > 4;
+                        }
+                    };
+                }
+
+                static collectionName() {
+                    return 'people';
+                }
+            }
+
+            var person = Person.create({
+                name: 'Scott'
+            });
+
+            person.save().then(function() {
+                validateId(person);
+                expect(person.name).to.be.equal('Scott');
+            }).then(done, done);
+        });
+
+        it('should reject value that fails custom validator', function(done) {
+
+            class Person extends Document {
+                constructor() {
+                    super();
+
+                    this.name = {
+                        type: String,
+                        validate: function(value) {
+                            return value.length > 4;
+                        }
+                    };
+                }
+
+                static collectionName() {
+                    return 'people';
+                }
+            }
+
+            var person = Person.create({
+                name: 'Matt'
+            });
+
+            person.save().then(function() {
+                fail(null, Error, 'Expected error, but got none.');
+            }).catch(function(error) {
+                expectError(error);
+            }).then(done, done);
+        });
+    });
+
+    describe('canonicalize', function() {
+        it('should ensure timestamp dates are converted to Date objects', function(done) {
+
+            class Person extends Document {
+                constructor() {
+                    super();
+
+                    this.birthday = Date;
+                }
+
+                static collectionName() {
+                    return 'people';
+                }
+            }
+
+            var now = new Date();
+
+            var person = Person.create({
+                birthday: now
+            });
+
+            person.save().then(function() {
+                validateId(person);
+                expect(person.birthday.getFullYear()).to.be.equal(now.getFullYear());
+                expect(person.birthday.getHours()).to.be.equal(now.getHours());
+                expect(person.birthday.getMinutes()).to.be.equal(now.getMinutes());
+                expect(person.birthday.getMonth()).to.be.equal(now.getMonth());
+                expect(person.birthday.getSeconds()).to.be.equal(now.getSeconds());
+            }).then(done, done);
+        });
+    });
+
+    describe('required', function() {
+        it('should accept empty value that is not reqired', function(done) {
+
+            class Person extends Document {
+                constructor() {
+                    super();
+
+                    this.name = {
+                        type: String,
+                        required: false
+                    };
+                }
+
+                static collectionName() {
+                    return 'people';
+                }
+            }
+
+            var person = Person.create({
+                name: ''
+            });
+
+            person.save().then(function() {
+                validateId(person);
+                expect(person.name).to.be.equal('');
+            }).then(done, done);
+        });
+
+        it('should accept value that is not undefined', function(done) {
+
+            class Person extends Document {
+                constructor() {
+                    super();
+
+                    this.name = {
+                        type: String,
+                        required: true
+                    };
+                }
+
+                static collectionName() {
+                    return 'people';
+                }
+            }
+
+            var person = Person.create({
+                name: 'Scott'
+            });
+
+            person.save().then(function() {
+                validateId(person);
+                expect(person.name).to.be.equal('Scott');
+            }).then(done, done);
+        });
+
+        it('should accept an empty value if default is specified', function(done) {
+
+            class Person extends Document {
+                constructor() {
+                    super();
+
+                    this.name = {
+                        type: String,
+                        required: true,
+                        default: 'Scott'
+                    };
+                }
+
+                static collectionName() {
+                    return 'people';
+                }
+            }
+
+            var person = Person.create();
+
+            person.save().then(function() {
+                validateId(person);
+                expect(person.name).to.be.equal('Scott');
+            }).then(done, done);
+        });
+
+        it('should accept boolean value', function(done) {
+
+            class Person extends Document {
+                constructor() {
+                    super();
+
+                    this.isSingle = {
+                        type: Boolean,
+                        required: true
+                    };
+                    this.isMerried = {
+                        type: Boolean,
+                        required: true
+                    };
+                }
+
+                static collectionName() {
+                    return 'people';
+                }
+            }
+
+            var person = Person.create({
+                isMerried: true,
+                isSingle: false
+            });
+
+            person.save().then(function() {
+                validateId(person);
+                expect(person.isMerried).to.be.true;
+                expect(person.isSingle).to.be.false;
+            }).then(done, done);
+        });
+
+        it('should accept date value', function(done) {
+
+            class Person extends Document {
+                constructor() {
+                    super();
+
+                    this.birthDate = {
+                        type: Date,
+                        required: true
+                    };
+                }
+
+                static collectionName() {
+                    return 'people';
+                }
+            }
+
+            var myBirthDate = new Date();
+
+            var person = Person.create({
+                birthDate: myBirthDate
+            });
+
+            person.save().then(function(savedPerson) {
+                validateId(person);
+                expect(savedPerson.birthDate).to.equal(myBirthDate);
+            }).then(done, done);
+        });
+
+        it('should accept any number value', function(done) {
+
+            class Person extends Document {
+                constructor() {
+                    super();
+
+                    this.age = {
+                        type: Number,
+                        required: true
+                    };
+                    this.level = {
+                        type: Number,
+                        required: true
+                    };
+                }
+
+                static collectionName() {
+                    return 'people';
+                }
+            }
+
+            var person = Person.create({
+                age: 21,
+                level: 0
+            });
+
+            person.save().then(function(savedPerson) {
+                validateId(person);
+                expect(savedPerson.age).to.equal(21);
+                expect(savedPerson.level).to.equal(0);
+            }).then(done, done);
+        });
+
+        it('should reject value that is undefined', function(done) {
+
+            class Person extends Document {
+                constructor() {
+                    super();
+
+                    this.name = {
+                        type: String,
+                        required: true
+                    };
+                }
+
+                static collectionName() {
+                    return 'people';
+                }
+            }
+
+            var person = Person.create();
+
+            person.save().then(function() {
+                fail(null, Error, 'Expected error, but got none.');
+            }).catch(function(error) {
+                expectError(error);
+            }).then(done, done);
+        });
+
+        it('should reject value if specified default empty value', function(done) {
+
+            class Person extends Document {
+                constructor() {
+                    super();
+
+                    this.name = {
+                        type: String,
+                        required: true,
+                        default: ''
+                    };
+                }
+
+                static collectionName() {
+                    return 'people';
+                }
+            }
+
+            var person = Person.create();
+
+            person.save().then(function() {
+                fail(null, Error, 'Expected error, but got none.');
+            }).catch(function(error) {
+                expectError(error);
+            }).then(done, done);
+        });
+
+        it('should reject value that is null', function(done) {
+
+            class Person extends Document {
+                constructor() {
+                    super();
+
+                    this.name = {
+                        type: Object,
+                        required: true
+                    };
+                }
+
+                static collectionName() {
+                    return 'people';
+                }
+            }
+
+            var person = Person.create({
+                name: null
+            });
+
+            person.save().then(function() {
+                fail(null, Error, 'Expected error, but got none.');
+            }).catch(function(error) {
+                expectError(error);
+            }).then(done, done);
+        });
+
+        it('should reject value that is an empty array', function(done) {
+
+            class Person extends Document {
+                constructor() {
+                    super();
+
+                    this.names = {
+                        type: Array,
+                        required: true
+                    };
+                }
+
+                static collectionName() {
+                    return 'people';
+                }
+            }
+
+            var person = Person.create({
+                names: []
+            });
+
+            person.save().then(function() {
+                fail(null, Error, 'Expected error, but got none.');
+            }).catch(function(error) {
+                expectError(error);
+            }).then(done, done);
+        });
+
+        it('should reject value that is an empty string', function(done) {
+
+            class Person extends Document {
+                constructor() {
+                    super();
+
+                    this.name = {
+                        type: String,
+                        required: true
+                    };
+                }
+
+                static collectionName() {
+                    return 'people';
+                }
+            }
+
+            var person = Person.create({
+                name: ''
+            });
+
+            person.save().then(function() {
+                fail(null, Error, 'Expected error, but got none.');
+            }).catch(function(error) {
+                expectError(error);
+            }).then(done, done);
+        });
+
+        it('should reject value that is an empty object', function(done) {
+
+            class Person extends Document {
+                constructor() {
+                    super();
+
+                    this.names = {
+                        type: Object,
+                        required: true
+                    };
+                }
+
+                static collectionName() {
+                    return 'people';
+                }
+            }
+
+            var person = Person.create({
+                names: {}
+            });
+
+            person.save().then(function() {
+                fail(null, Error, 'Expected error, but got none.');
+            }).catch(function(error) {
+                expectError(error);
+            }).then(done, done);
+        });
+    });
+
     describe('hooks', function() {
         it('should call all pre and post functions', function(done) {
 
@@ -878,7 +1507,11 @@ describe('Document', function() {
 
             class Person extends Document {
                 constructor() {
-                    super('person');
+                    super();
+                }
+
+                static collectionName() {
+                    return 'people';
                 }
 
                 preValidate() {
@@ -916,7 +1549,7 @@ describe('Document', function() {
                 expect(preSaveCalled).to.be.equal(true);
                 expect(postValidateCalled).to.be.equal(true);
                 expect(postSaveCalled).to.be.equal(true);
-                
+
                 // Pre/post delete should not have been called yet
                 expect(preDeleteCalled).to.be.equal(false);
                 expect(postDeleteCalled).to.be.equal(false);
@@ -927,6 +1560,127 @@ describe('Document', function() {
 
                 expect(preDeleteCalled).to.be.equal(true);
                 expect(postDeleteCalled).to.be.equal(true);
+            }).then(done, done);
+        });
+    });
+
+    describe('serialize', function() {
+        it('should serialize data to JSON', function(done) {
+            class Person extends Document {
+                constructor() {
+                    super();
+
+                    this.name = String;
+                    this.age = Number;
+                    this.isAlive = Boolean;
+                    this.children = [String];
+                    this.spouse = {
+                        type: String,
+                        default: null
+                    };
+                }
+
+                static collectionName() {
+                    return 'people';
+                }
+            }
+
+            var person = Person.create({
+                name: 'Scott',
+                age: 28,
+                isAlive: true,
+                children: ['Billy', 'Timmy'],
+                spouse: null
+            });
+
+            person.save().then(function() {
+                validateId(person);
+                expect(person.name).to.be.equal('Scott');
+                expect(person.age).to.be.equal(28);
+                expect(person.isAlive).to.be.equal(true);
+                expect(person.children).to.have.length(2);
+                expect(person.spouse).to.be.null;
+
+                var json = person.toJSON();
+
+                expect(json.name).to.be.equal('Scott');
+                expect(json.age).to.be.equal(28);
+                expect(json.isAlive).to.be.equal(true);
+                expect(json.children).to.have.length(2);
+                expect(json.spouse).to.be.null;
+                expect(json._id).to.be.equal(person._id.toString());
+            }).then(done, done);
+        });
+
+        it('should serialize data to JSON', function(done) {
+            class Person extends Document {
+                constructor() {
+                    super();
+
+                    this.name = String;
+                    this.children = [Person];
+                    this.spouse = {
+                        type: Person,
+                        default: null
+                    };
+                }
+
+                static collectionName() {
+                    return 'people';
+                }
+            }
+
+            var person = Person.create({
+                name: 'Scott'
+            });
+
+            var spouse = Person.create({
+                name: 'Jane'
+            });
+
+            var kid1 = Person.create({
+                name: 'Billy'
+            });
+
+            var kid2 = Person.create({
+                name: 'Timmy'
+            });
+
+            spouse.save().then(function() {
+                return kid1.save();
+            }).then(function() {
+                return kid2.save();
+            }).then(function() {
+                person.spouse = spouse;
+                person.children.push(kid1);
+                person.children.push(kid2);
+
+                return person.save();
+            }).then(function() {
+                validateId(person);
+                validateId(spouse);
+                validateId(kid1);
+                validateId(kid2);
+
+                expect(person.name).to.be.equal('Scott');
+                expect(person.children).to.have.length(2);
+                expect(person.spouse.name).to.be.equal('Jane');
+                expect(person.children[0].name).to.be.equal('Billy');
+                expect(person.children[1].name).to.be.equal('Timmy');
+                expect(person.spouse).to.be.an.instanceof(Person);
+                expect(person.children[0]).to.be.an.instanceof(Person);
+                expect(person.children[1]).to.be.an.instanceof(Person);
+
+                var json = person.toJSON();
+
+                expect(json.name).to.be.equal('Scott');
+                expect(json.children).to.have.length(2);
+                expect(json.spouse.name).to.be.equal('Jane');
+                expect(json.children[0].name).to.be.equal('Billy');
+                expect(json.children[1].name).to.be.equal('Timmy');
+                expect(json.spouse).to.not.be.an.instanceof(Person);
+                expect(json.children[0]).to.not.be.an.instanceof(Person);
+                expect(json.children[1]).to.not.be.an.instanceof(Person);
             }).then(done, done);
         });
     });

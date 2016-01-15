@@ -34,7 +34,7 @@ var getCollection = function(name, collections, path) {
 		collections[name] = collection;
 		return collection;
 	}
-	
+
 	return collections[name];
 };
 
@@ -180,15 +180,32 @@ export class NeDbClient extends DatabaseClient {
     	});
     }
 
-    loadMany(collection, query) {
-    	var that = this;
-    	return new Promise(function(resolve, reject) {
-    		var db = getCollection(collection, that._collections, that._path);
-    		db.find(query, function (error, result) {
-    			if (error) return reject(error);
-    			return resolve(result);
-			});
-    	});
+    loadMany(collection, query, options) {
+        var that = this;
+        return new Promise(function(resolve, reject) {
+            var db = getCollection(collection, that._collections, that._path);
+            var cursor = db.find(query);
+            if (typeof options.sort === 'string') {
+                var sortOrder = 1;
+                if (options.sort[0] === '-') {
+                    sortOrder = -1;
+                    options.sort = options.sort.substring(1);
+                }
+                var sortOptions = {};
+                sortOptions[options.sort] = sortOrder;
+                cursor = cursor.sort(sortOptions);
+            }
+            if (typeof options.skip === 'number') {
+                cursor = cursor.skip(options.skip);
+            }
+            if (typeof options.limit === 'number') {
+                cursor = cursor.limit(options.limit);
+            }
+            cursor.exec(function(error, result) {
+                if (error) return reject(error);
+                return resolve(result);
+            });
+        });
     }
 
     count(collection, query) {
@@ -200,6 +217,15 @@ export class NeDbClient extends DatabaseClient {
     			return resolve(count);
 			});
     	});
+    }
+
+    createIndex(collection, field, options) {
+        options = options || {};
+        options.unique = options.unique || false;
+        options.sparse = options.sparse || false;
+
+        var db = getCollection(collection, this._collections, this._path);
+        db.ensureIndex({fieldName: field, unique: options.unique, sparse: options.sparse});
     }
 
     static connect(url, options) {
@@ -276,7 +302,7 @@ export class NeDbClient extends DatabaseClient {
 
     // Native ids are the same as NeDB ids
     isNativeId(value) {
-        return String(value).match(/^[a-zA-Z0-9]{16}$/);
+        return String(value).match(/^[a-zA-Z0-9]{16}$/) !== null;
     }
 
     nativeIdType() {

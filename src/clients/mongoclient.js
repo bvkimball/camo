@@ -5,6 +5,8 @@ import path from 'path';
 import fs from 'fs';
 import { MongoClient as MDBClient, ObjectId } from 'mongodb';
 import { DatabaseClient } from './client';
+import { isObject } from '../validate';
+import { deepTraverse } from '../util';
 
 export class MongoClient extends DatabaseClient {
     constructor(url, mongo) {
@@ -54,6 +56,7 @@ export class MongoClient extends DatabaseClient {
 
     deleteOne(collection, query) {
         var that = this;
+        query = castQueryIds(query);
         return new Promise(function(resolve, reject) {
             var db = that._mongo.collection(collection);
             db.deleteOne(query, {w:1}, function (error, result) {
@@ -65,6 +68,7 @@ export class MongoClient extends DatabaseClient {
 
     deleteMany(collection, query) {
         var that = this;
+        query = castQueryIds(query);
         return new Promise(function(resolve, reject) {
             var db = that._mongo.collection(collection);
             db.deleteMany(query, {w:1}, function (error, result) {
@@ -76,6 +80,7 @@ export class MongoClient extends DatabaseClient {
 
     loadOne(collection, query) {
         var that = this;
+        query = castQueryIds(query);
         return new Promise(function(resolve, reject) {
             var db = that._mongo.collection(collection);
             db.findOne(query, function (error, doc) {
@@ -87,7 +92,7 @@ export class MongoClient extends DatabaseClient {
 
     loadOneAndUpdate(collection, query, values, options) {
         var that = this;
-
+        query = castQueryIds(query);
         if (!options) {
             options = {};
         }
@@ -114,7 +119,7 @@ export class MongoClient extends DatabaseClient {
 
     loadOneAndDelete(collection, query, options) {
         var that = this;
-
+        query = castQueryIds(query);
         if (!options) {
             options = {};
         }
@@ -129,11 +134,29 @@ export class MongoClient extends DatabaseClient {
         });
     }
 
-    loadMany(collection, query) {
+    loadMany(collection, query, options) {
         var that = this;
+        query = castQueryIds(query);
         return new Promise(function(resolve, reject) {
             var db = that._mongo.collection(collection);
-            db.find(query).toArray(function (error, docs) {
+            var cursor = db.find(query);
+            if (typeof options.sort === 'string') {
+                var sortOrder = 1;
+                if (options.sort[0] === '-') {
+                    sortOrder = -1;
+                    options.sort = options.sort.substring(1);
+                }
+                var sortOptions = {};
+                sortOptions[options.sort] = sortOrder;
+                cursor = cursor.sort(sortOptions);
+            }
+            if (typeof options.skip === 'number') {
+                cursor = cursor.skip(options.skip);
+            }
+            if (typeof options.limit === 'number') {
+                cursor = cursor.limit(options.limit);
+            }
+            cursor.toArray(function(error, docs) {
                 if (error) return reject(error);
                 return resolve(docs);
             });
@@ -142,6 +165,7 @@ export class MongoClient extends DatabaseClient {
 
     count(collection, query) {
         var that = this;
+        query = castQueryIds(query);
         return new Promise(function(resolve, reject) {
             var db = that._mongo.collection(collection);
             db.count(query, function (error, count) {
@@ -149,6 +173,18 @@ export class MongoClient extends DatabaseClient {
                 return resolve(count);
             });
         });
+    }
+
+    createIndex(collection, field, options) {
+        options = options || {};
+        options.unique = options.unique || false;
+        options.sparse = options.sparse || false;
+
+        var db = this._mongo.collection(collection);
+
+        var keys = {};
+        keys[field] = 1;
+        db.createIndex(keys, {unique: options.unique, sparse: options.sparse});
     }
 
     static connect(url, options) {
@@ -198,7 +234,7 @@ export class MongoClient extends DatabaseClient {
     }
 
     isNativeId(value) {
-        return value instanceof ObjectId || String(value).match(/^[a-fA-F0-9]{24}$/);
+        return value instanceof ObjectId || String(value).match(/^[a-fA-F0-9]{24}$/) !== null;
     }
 
     nativeIdType() {
@@ -208,5 +244,37 @@ export class MongoClient extends DatabaseClient {
     driver() {
         return this._mongo;
     }
-
 }
+
+var castId = function(val) {
+    return new ObjectId(val);
+};
+
+var castIdArray = function(vals) {
+    return vals.map(function(v) {
+        return castId(v);
+    });
+};
+
+/*
+ * Traverses query and converts all IDs to MongoID
+ *
+ * TODO: Should we check for $not operator?
+ */
+var castQueryIds = function(query) {
+    deepTraverse(query, function(key, val, parent) {
+        if (key === '_id') {
+            if (String(parent[key]).match(/^[a-fA-F0-9]{24}$/)) {
+                parent[key] = castId(parent[key]);
+            } else if (isObject(parent[key]) && _.has(parent[key], '$in')) {
+                // { _id: { '$in': [ 'K1cbMk7T8A0OU83IAT4dFa91', 'Y1cbak7T8A1OU83IBT6aPq11' ] } }
+                parent[key].$in = castIdArray(parent[key].$in);
+            } else if (isObject(parent[key]) && _.has(parent[key], '$nin')) {
+                // { _id: { '$nin': [ 'K1cbMk7T8A0OU83IAT4dFa91', 'Y1cbak7T8A1OU83IBT6aPq11' ] } }
+                parent[key].$nin = castIdArray(parent[key].$nin);
+            }
+        }
+    });
+
+    return query;
+};

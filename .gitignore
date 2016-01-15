@@ -2,5 +2,6 @@ todo.txt
 notes.txt
 node_modules/
 npm-debug.log
-lib
 test-dist
+lib
+.jshintrc

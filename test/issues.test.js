@@ -1,9 +1,8 @@
 "use strict";
 
-var expect = require('chai').expect;
-var connect = require('../index').connect;
-var Document = require('../index').Document;
-var validateId = require('./util').validateId;
+import { expect } from 'chai';
+import { Database, Document } from '../src/index';
+import { validateId } from './util';
 
 describe('Issues', function() {
 
@@ -13,7 +12,7 @@ describe('Issues', function() {
     var database = null;
 
     before(function(done) {
-        connect(url).then(function(db) {
+        Database.connect(url).then(function(db) {
             database = db;
             return database.dropDatabase();
         }).then(function() {
@@ -35,7 +34,7 @@ describe('Issues', function() {
 
     describe('#4', function() {
         it('should not load duplicate references in array when only one reference is present', function(done) {
-            /* 
+            /*
              * This issue happens when there are multiple objects in the database,
              * each object has an array of references, and at least two of the
              * object's arrays contain the same reference.
@@ -47,22 +46,26 @@ describe('Issues', function() {
 
             class Eye extends Document {
                 constructor() {
-                    super('eyes');
+                    super();
                     this.color = String;
                 }
             }
 
             class User extends Document {
                 constructor() {
-                    super('users');
+                    super();
                     this.eyes = [Eye];
                 }
             }
 
             var user1 = User.create();
             var user2 = User.create();
-            var eye1 = Eye.create({color: 'blue'});
-            var eye2 = Eye.create({color: 'brown'});
+            var eye1 = Eye.create({
+                color: 'blue'
+            });
+            var eye2 = Eye.create({
+                color: 'brown'
+            });
 
             var id;
 
@@ -84,24 +87,24 @@ describe('Issues', function() {
                 expect(users).to.have.length(2);
 
                 // Get user1
-                var u1 = String(users[0].id) === String(user1.id) ? users[0] : users[1];
+                var u1 = String(users[0]._id) === String(user1._id) ? users[0] : users[1];
 
                 // Ensure we have correct number of eyes...
                 expect(u1.eyes).to.have.length(2);
 
-                var e1 = String(u1.eyes[0].id) === String(eye1.id) ? u1.eyes[0] : u1.eyes[1];
-                var e2 = String(u1.eyes[1].id) === String(eye2.id) ? u1.eyes[1] : u1.eyes[0];
+                var e1 = String(u1.eyes[0]._id) === String(eye1._id) ? u1.eyes[0] : u1.eyes[1];
+                var e2 = String(u1.eyes[1]._id) === String(eye2._id) ? u1.eyes[1] : u1.eyes[0];
 
                 // ...and that we have the correct eyes
-                expect(String(e1.id)).to.be.equal(String(eye1.id));
-                expect(String(e2.id)).to.be.equal(String(eye2.id));
+                expect(String(e1._id)).to.be.equal(String(eye1._id));
+                expect(String(e2._id)).to.be.equal(String(eye2._id));
             }).then(done, done);
         });
     });
 
     describe('#5', function() {
         it('should allow multiple references to the same object in same array', function(done) {
-            /* 
+            /*
              * This issue happens when an object has an array of
              * references and there are multiple references to the
              * same object in the array.
@@ -113,20 +116,22 @@ describe('Issues', function() {
 
             class Eye extends Document {
                 constructor() {
-                    super('eyes');
+                    super();
                     this.color = String;
                 }
             }
 
             class User extends Document {
                 constructor() {
-                    super('users');
+                    super();
                     this.eyes = [Eye];
                 }
             }
 
             var user = User.create();
-            var eye = Eye.create({color: 'blue'});
+            var eye = Eye.create({
+                color: 'blue'
+            });
 
             eye.save().then(function(e) {
                 validateId(e);
@@ -139,16 +144,18 @@ describe('Issues', function() {
                 expect(users).to.have.length(1);
                 expect(users[0].eyes).to.have.length(2);
 
-                var eyeRefs = users[0].eyes.map(function(e) {return e.id;});
+                var eyeRefs = users[0].eyes.map(function(e) {
+                    return e._id;
+                });
 
-                expect(eyeRefs).to.include(eye.id);
+                expect(eyeRefs).to.include(eye._id);
             }).then(done, done);
         });
     });
 
     describe('#8', function() {
         it('should use virtuals when initializing instance with data', function(done) {
-            /* 
+            /*
              * This issue happens when a model has virtual setters
              * and the caller tries to use those setters during
              * initialization via `create()`. The setters are
@@ -157,7 +164,7 @@ describe('Issues', function() {
 
             class User extends Document {
                 constructor() {
-                    super('user');
+                    super();
                     this.firstName = String;
                     this.lastName = String;
                 }
@@ -179,8 +186,55 @@ describe('Issues', function() {
 
             expect(user.firstName).to.be.equal('Billy');
             expect(user.lastName).to.be.equal('Bob');
-            
+
             done();
+        });
+    });
+
+    describe('#20', function() {
+        it('should not alias _id to id in queries and returned documents', function(done) {
+            /*
+             * Camo inconsistently aliases the '_id' field to 'id'. When
+             * querying, we must use '_id', but documents are returned
+             * with '_id' AND 'id'. 'id' alias should be removed.
+             *
+             * TODO: Uncomment lines below once '_id' is fully
+             * deprecated and removed.
+             */
+
+            class User extends Document {
+                constructor() {
+                    super();
+                    this.name = String;
+                }
+            }
+
+            var user = User.create({
+                name: 'Billy Bob'
+            });
+
+            user.save().then(function() {
+                validateId(user);
+
+                //expect(user.id).to.not.exist;
+                expect(user._id).to.exist;
+
+                // Should NOT be able to use 'id' to query
+                return User.loadOne({
+                    id: user._id
+                });
+            }).then(function(u) {
+                expect(u).to.not.exist;
+
+                // SHOULD be able to use '_id' to query
+                return User.loadOne({
+                    _id: user._id
+                });
+            }).then(function(u) {
+                //expect(u.id).to.not.exist;
+                expect(u).to.exist;
+                validateId(user);
+            }).then(done, done);
         });
     });
 });

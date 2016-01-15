@@ -1,15 +1,14 @@
 "use strict";
 
-var Document = require('../../index').Document;
+import { Document } from '../../src/index';
+import { Foo } from './foo';
 //var Foo = require('./foo');
 
-class Bar extends Document {
-	constructor() {
-		super('bar');
+export class Bar extends Document {
+    constructor() {
+        super();
 
-		this.foo = require('./foo');
-		this.num = Number;
-	}
+        this.foo = Foo;
+        this.num = Number;
+    }
 }
-
-module.exports = Bar;

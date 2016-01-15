@@ -1,12 +1,12 @@
 "use strict";
 
-var _ = require('lodash');
-var fs = require('fs');
-var expect = require('chai').expect;
-var connect = require('../index').connect;
-var validateId = require('./util').validateId;
-var Foo = require('./cyclic/foo');
-var Bar = require('./cyclic/bar');
+import _ from 'lodash';
+import fs from 'fs';
+import { expect } from 'chai';
+import { Database } from '../src/index';
+import { validateId } from './util';
+import { Foo } from './cyclic/foo';
+import { Bar } from './cyclic/bar';
 
 describe('Cyclic', function() {
 
@@ -16,7 +16,7 @@ describe('Cyclic', function() {
     var database = null;
 
     before(function(done) {
-        connect(url).then(function(db) {
+        Database.connect(url).then(function(db) {
             database = db;
             return database.dropDatabase();
         }).then(function() {
@@ -50,20 +50,24 @@ describe('Cyclic', function() {
                 f.bar = b;
                 return f.save();
             }).then(function(foo) {
-                return Foo.loadOne({ num: 26 });
+                return Foo.loadOne({
+                    num: 26
+                });
             }).then(function(foo) {
                 validateId(foo);
                 validateId(foo.bar);
                 expect(foo.num).to.be.equal(26);
                 expect(foo.bar.num).to.be.equal(99);
-                return Bar.loadOne({ num: 99 });
+                return Bar.loadOne({
+                    num: 99
+                });
             }).then(function(bar) {
                 validateId(bar);
                 validateId(bar.foo);
                 expect(bar.num).to.be.equal(99);
                 expect(bar.foo.num).to.be.equal(26);
             }).then(done, done);
-            
+
         });
     });
 });
