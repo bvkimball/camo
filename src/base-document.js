@@ -5,6 +5,7 @@ import { Connection as DB } from './db';
 //var DB = require('./clients').getClient;
 import { isSupportedType, isValidType, isEmptyValue, isInChoices, isArray, isDocument, isEmbeddedDocument, isString, isNumber } from './validate';
 import { ValidationError } from './errors';
+import deprecate from 'deprecate';
 
 var normalizeType = function(property) {
     // TODO: Only copy over stuff we support
@@ -92,17 +93,23 @@ export class BaseDocument {
      * to override the appropriate hook method below.
      */
 
-    preValidate() {}
+    preValidate() {
+    }
 
-    postValidate() {}
+    postValidate() {
+    }
 
-    preSave() {}
+    preSave() {
+    }
 
-    postSave() {}
+    postSave() {
+    }
 
-    preDelete() {}
+    preDelete() {
+    }
 
-    postDelete() {}
+    postDelete() {
+    }
 
     // TODO : EMBEDDED
     // Need to share this with embedded
@@ -268,7 +275,8 @@ export class BaseDocument {
         return this._instantiate();
     }
 
-    static createIndexes() {}
+    static createIndexes() {
+    }
 
     static _instantiate() {
         var instance = new this();

@@ -4,14 +4,14 @@ import { MongoClient } from './clients/mongoclient';
 let CLIENT = null;
 
 export class Database {
-    static connect(url, options){
+    static connect(url, options) {
         if (url.indexOf('nedb://') > -1) {
             // url example: nedb://path/to/file/folder
             return NeDbClient.connect(url, options).then(function(db) {
                 CLIENT = db;
                 return db;
             });
-        } else if(url.indexOf('mongodb://') > -1) {
+        } else if (url.indexOf('mongodb://') > -1) {
             // url example: 'mongodb://localhost:27017/myproject'
             return MongoClient.connect(url, options).then(function(db) {
                 CLIENT = db;
@@ -21,7 +21,7 @@ export class Database {
             return Promise.reject(new Error('Unrecognized DB connection url.'));
         }
     }
-    static get connection(){
+    static get connection() {
         if (CLIENT === null || CLIENT === undefined) {
             throw new Error('You must first call \'connect\' before loading/saving documents.');
         }
@@ -29,7 +29,7 @@ export class Database {
     }
 }
 
-export function Connection(){
+export function Connection() {
     if (CLIENT === null || CLIENT === undefined) {
         throw new Error('You must first call \'connect\' before loading/saving documents.');
     }

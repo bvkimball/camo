@@ -55,7 +55,7 @@ For a short tutorial on using Camo, check out [this](http://stackabuse.com/getti
 ### Connect to the Database
 Before using any document methods, you must first connect to your underlying database. All supported databases have their own unique URI string used for connecting. The URI string usually describes the network location or file location of the database. However, some databases support more than just network or file locations. NeDB, for example, supports storing data in-memory, which can be specified to Camo via `nedb://memory`. See below for details:
 
-- MongoDB: 
+- MongoDB:
   - Format: mongodb://[username:password@]host[:port][/db-name]
   - Example: `var uri = 'mongodb://scott:abc123@localhost:27017/animals';`
 - NeDB:
@@ -65,12 +65,11 @@ Before using any document methods, you must first connect to your underlying dat
 So to connect to an NeDB database, use the following:
 
 ```javascript
-var connect = require('camo').connect;
+import { Database } from 'camo';
 
-var database;
-var uri = 'nedb:///Users/scott/data/animals';
+let uri = 'nedb:///Users/scott/data/animals';
 connect(uri).then(function(db) {
-    database = db;
+    console.log('Connected');
 });
 ```
 
@@ -78,7 +77,7 @@ connect(uri).then(function(db) {
 All models must inherit from the `Document` class, which handles much of the interface to your backend NoSQL database.
 
 ```javascript
-var Document = require('camo').Document;
+import { Document } from 'camo';
 
 class Company extends Document {
     constructor() {
@@ -103,7 +102,7 @@ class Company extends Document {
 }
 ```
 
-Notice how the schema is declared right in the constructor as member variables. All _public_ member variables (variables that don't start with an underscore [_]) are added to the schema.
+Notice how the schema is declared right in the constructor as member variables. All _public_ member variables (variables that don't start with an underscore `[_]`) are added to the schema.
 
 The name of the collection can be set by overriding the `static collectionName()` method, which should return the desired collection name as a string. If one isn't given, then Camo uses the name of the class and naively appends an 's' to the end to make it plural.
 

@@ -30,10 +30,10 @@
   "main": "lib/index.js",
   "license": "MIT",
   "scripts": {
-      "doc": "esdoc -c ./esdoc.json",
-      "compile": "git clean -xdf lib && babel -d lib/ src",
-      "prepublish": "npm run compile",
-      "test": "mocha --compilers js:babel-register test/*.js"
+    "doc": "esdoc -c ./esdoc.json",
+    "compile": "git clean -xdf lib && babel -d lib/ src",
+    "prepublish": "npm run compile",
+    "test": "mocha --compilers js:babel-register test/*.js"
   },
   "engines": {
     "iojs": "~2.2.1",
@@ -41,6 +41,7 @@
   },
   "dependencies": {
     "depd": "1.1.0",
+    "deprecate": "^0.1.0",
     "lodash": "3.9.3"
   },
   "optionalDependencies": {
@@ -62,8 +63,7 @@
   },
   "jshintConfig": {
     "node": true,
-    "mocha": true,
-    "esnext": true,
-    "mocha": "2.2.5"
+    "mocha": "2.2.5",
+    "esnext": true
   }
 }

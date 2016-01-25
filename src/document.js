@@ -4,7 +4,7 @@ import _ from 'lodash';
 import { Connection as DB } from './db';
 import { BaseDocument } from './base-document';
 import { isSupportedType, isReferenceable, isArray, isEmbeddedDocument, isString } from './validate';
-//var deprecate = require('depd')('camo');
+import deprecate from 'deprecate';
 //var DB = require('./clients').getClient;
 
 export class Document extends BaseDocument {
