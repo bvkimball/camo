@@ -1,12 +1,15 @@
 {
-  "name": "camo",
-  "version": "0.11.3",
+  "name": "crypsis",
+  "version": "0.12.0",
   "description": "A class-based ES6 ODM for Mongo-like databases.",
-  "author": {
+  "author": [{
     "name": "Scott Robinson",
     "email": "s.w.robinson@gmail.com",
     "url": "http://stackabuse.com"
-  },
+  },{
+    "name": "Brian Kimball",
+    "email": "bvkimball@gmail.com"
+  }],
   "keywords": [
     "es6",
     "odm",
@@ -22,10 +25,10 @@
     "query",
     "db"
   ],
-  "homepage": "https://github.com/bvkimball/camo",
+  "homepage": "https://github.com/bvkimball/crypsis",
   "repository": {
     "type": "git",
-    "url": "git@github.com:bvkimball/camo.git"
+    "url": "git@github.com:bvkimball/crypsis.git"
   },
   "main": "lib/index.js",
   "license": "MIT",

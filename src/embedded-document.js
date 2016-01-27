@@ -1,5 +1,3 @@
-"use strict";
-
 import { BaseDocument } from './base-document';
 
 export class EmbeddedDocument extends BaseDocument {

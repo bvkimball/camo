@@ -1,11 +1,9 @@
-"use strict";
-
 export class DatabaseClient {
-	constructor(url) {
-		this._url = url;
-	}
+    constructor(url) {
+        this._url = url;
+    }
 
-	save(collection, query, values) {
+    save(collection, query, values) {
         throw new TypeError('You must override save.');
     }
 
@@ -46,12 +44,12 @@ export class DatabaseClient {
     }
 
     static connect(url, options) {
-		throw new TypeError('You must override connect (static).');
-	}
+        throw new TypeError('You must override connect (static).');
+    }
 
-	close() {
-		throw new TypeError('You must override close.');
-	}
+    close() {
+        throw new TypeError('You must override close.');
+    }
 
     clearCollection(collection) {
         throw new TypeError('You must override clearCollection.');

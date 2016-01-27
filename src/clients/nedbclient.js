@@ -1,5 +1,3 @@
-"use strict";
-
 import _ from 'lodash';
 import path from 'path';
 import fs from 'fs';
@@ -7,122 +5,135 @@ import Datastore from 'nedb';
 import { DatabaseClient } from './client';
 
 var urlToPath = function(url) {
-	if (url.indexOf('nedb://') > -1) {
-		return url.slice(7, url.length);
-	}
-	return url;
+    if (url.indexOf('nedb://') > -1) {
+        return url.slice(7, url.length);
+    }
+    return url;
 };
 
 var getCollectionPath = function(dbLocation, collection) {
-	if (dbLocation === 'memory') {
-		return dbLocation;
-	}
-	return path.join(dbLocation, collection) + '.db';
+    if (dbLocation === 'memory') {
+        return dbLocation;
+    }
+    return path.join(dbLocation, collection) + '.db';
 };
 
 var createCollection = function(collectionName, url) {
-	if (url === 'memory') {
-		return new Datastore({inMemoryOnly: true});
-	}
-	var collectionPath = getCollectionPath(url, collectionName);
-	return new Datastore({filename: collectionPath, autoload: true});
+    if (url === 'memory') {
+        return new Datastore({
+            inMemoryOnly: true
+        });
+    }
+    var collectionPath = getCollectionPath(url, collectionName);
+    return new Datastore({
+        filename: collectionPath,
+        autoload: true
+    });
 };
 
 var getCollection = function(name, collections, path) {
-	if (!(name in collections)) {
-		var collection = createCollection(name, path);
-		collections[name] = collection;
-		return collection;
-	}
+    if (!(name in collections)) {
+        var collection = createCollection(name, path);
+        collections[name] = collection;
+        return collection;
+    }
 
-	return collections[name];
+    return collections[name];
 };
 
 export class NeDbClient extends DatabaseClient {
-	constructor(url, collections) {
-		super(url);
-		this._path = urlToPath(url);
+    constructor(url, collections) {
+        super(url);
+        this._path = urlToPath(url);
 
-		if (collections) {
-			this._collections = collections;
-		} else {
-			this._collections = {};
-		}
-	}
+        if (collections) {
+            this._collections = collections;
+        } else {
+            this._collections = {};
+        }
+    }
 
-	save(collection, id, values) {
-		var that = this;
-		return new Promise(function(resolve, reject) {
-			var db = getCollection(collection, that._collections, that._path);
+    save(collection, id, values) {
+        var that = this;
+        return new Promise(function(resolve, reject) {
+            var db = getCollection(collection, that._collections, that._path);
 
-			// TODO: I'd like to just use update with upsert:true, but I'm
-			// note sure how the query will work if id == null. Seemed to
-			// have some problems before with passing null ids.
-			if (id === null) {
-				db.insert(values, function(error, result) {
-					if (error) return reject(error);
-					return resolve(result._id);
-			    });
-			} else {
-				db.update({ _id: id }, { $set: values }, function(error, result) {
-					if (error) return reject(error);
-					return resolve(result);
-			    });
-			}
-		});
+            // TODO: I'd like to just use update with upsert:true, but I'm
+            // note sure how the query will work if id == null. Seemed to
+            // have some problems before with passing null ids.
+            if (id === null) {
+                db.insert(values, function(error, result) {
+                    if (error) return reject(error);
+                    return resolve(result._id);
+                });
+            } else {
+                db.update({
+                    _id: id
+                }, {
+                    $set: values
+                }, function(error, result) {
+                    if (error) return reject(error);
+                    return resolve(result);
+                });
+            }
+        });
     }
 
     delete(collection, id) {
-    	var that = this;
+        var that = this;
         return new Promise(function(resolve, reject) {
-        	if (id === null) resolve(0);
+            if (id === null) resolve(0);
 
-        	var db = getCollection(collection, that._collections, that._path);
-    		db.remove({ _id: id }, function (error, numRemoved) {
-    			if (error) return reject(error);
-    			return resolve(numRemoved);
-			});
-    	});
+            var db = getCollection(collection, that._collections, that._path);
+            db.remove({
+                _id: id
+            }, function(error, numRemoved) {
+                if (error) return reject(error);
+                return resolve(numRemoved);
+            });
+        });
     }
 
     deleteOne(collection, query) {
-    	var that = this;
+        var that = this;
         return new Promise(function(resolve, reject) {
-        	var db = getCollection(collection, that._collections, that._path);
-    		db.remove(query, function (error, numRemoved) {
-    			if (error) return reject(error);
-    			return resolve(numRemoved);
-			});
-    	});
+            var db = getCollection(collection, that._collections, that._path);
+            db.remove(query, function(error, numRemoved) {
+                if (error) return reject(error);
+                return resolve(numRemoved);
+            });
+        });
     }
 
     deleteMany(collection, query) {
-    	var that = this;
+        var that = this;
         return new Promise(function(resolve, reject) {
-        	var db = getCollection(collection, that._collections, that._path);
-    		db.remove(query, { multi: true }, function (error, numRemoved) {
-    			if (error) return reject(error);
-    			return resolve(numRemoved);
-			});
-    	});
+            var db = getCollection(collection, that._collections, that._path);
+            db.remove(query, {
+                multi: true
+            }, function(error, numRemoved) {
+                if (error) return reject(error);
+                return resolve(numRemoved);
+            });
+        });
     }
 
     loadOne(collection, query) {
-    	var that = this;
-    	return new Promise(function(resolve, reject) {
-    		var db = getCollection(collection, that._collections, that._path);
-    		db.findOne(query, function (error, result) {
-    			if (error) return reject(error);
-    			return resolve(result);
-			});
-    	});
+        var that = this;
+        return new Promise(function(resolve, reject) {
+            var db = getCollection(collection, that._collections, that._path);
+            db.findOne(query, function(error, result) {
+                if (error) return reject(error);
+                return resolve(result);
+            });
+        });
     }
 
     loadOneAndUpdate(collection, query, values, options) {
         var that = this;
 
         if (!options) {
-        	options = {};
+            options = {};
         }
 
         // Since this is 'loadOne...' we'll only allow user to update
@@ -139,24 +150,26 @@ export class NeDbClient extends DatabaseClient {
                 resolve(newDoc);
             });*/
 
-        	that.loadOne(collection, query).then(function(data) {
-        		if (!data) {
-        			if (options.upsert) {
-        				return db.insert(values, function(error, result) {
-							if (error) return reject(error);
-							return resolve(result);
-					    });
-        			} else {
-        				return resolve(null);
-        			}
-        		} else {
-        			return db.update(query, { $set: values }, function(error, result) {
-        				if (error) return reject(error);
-        				result = _.assign(data, values);
-						return resolve(result);
-				    });
-        		}
-        	});
+            that.loadOne(collection, query).then(function(data) {
+                if (!data) {
+                    if (options.upsert) {
+                        return db.insert(values, function(error, result) {
+                            if (error) return reject(error);
+                            return resolve(result);
+                        });
+                    } else {
+                        return resolve(null);
+                    }
+                } else {
+                    return db.update(query, {
+                        $set: values
+                    }, function(error, result) {
+                        if (error) return reject(error);
+                        result = _.assign(data, values);
+                        return resolve(result);
+                    });
+                }
+            });
         });
     }
 
@@ -164,7 +177,7 @@ export class NeDbClient extends DatabaseClient {
         var that = this;
 
         if (!options) {
-        	options = {};
+            options = {};
         }
 
         // Since this is 'loadOne...' we'll only allow user to update
@@ -172,12 +185,12 @@ export class NeDbClient extends DatabaseClient {
         options.multi = false;
 
         return new Promise(function(resolve, reject) {
-        	var db = getCollection(collection, that._collections, that._path);
-    		db.remove(query, options, function (error, numRemoved) {
-    			if (error) return reject(error);
-    			return resolve(numRemoved);
-			});
-    	});
+            var db = getCollection(collection, that._collections, that._path);
+            db.remove(query, options, function(error, numRemoved) {
+                if (error) return reject(error);
+                return resolve(numRemoved);
+            });
+        });
     }
 
     loadMany(collection, query, options) {
@@ -210,13 +223,13 @@ export class NeDbClient extends DatabaseClient {
 
     count(collection, query) {
         var that = this;
-    	return new Promise(function(resolve, reject) {
-    		var db = getCollection(collection, that._collections, that._path);
-    		db.count(query, function (error, count) {
-    			if (error) return reject(error);
-    			return resolve(count);
-			});
-    	});
+        return new Promise(function(resolve, reject) {
+            var db = getCollection(collection, that._collections, that._path);
+            db.count(query, function(error, count) {
+                if (error) return reject(error);
+                return resolve(count);
+            });
+        });
     }
 
     createIndex(collection, field, options) {
@@ -225,75 +238,79 @@ export class NeDbClient extends DatabaseClient {
         options.sparse = options.sparse || false;
 
         var db = getCollection(collection, this._collections, this._path);
-        db.ensureIndex({fieldName: field, unique: options.unique, sparse: options.sparse});
+        db.ensureIndex({
+            fieldName: field,
+            unique: options.unique,
+            sparse: options.sparse
+        });
     }
 
     static connect(url, options) {
-    	// Could be directory path or 'memory'
-		var dbLocation = urlToPath(url);
+        // Could be directory path or 'memory'
+        var dbLocation = urlToPath(url);
 
-		return new Promise(function(resolve, reject) {
-			var collections = {};
+        return new Promise(function(resolve, reject) {
+            var collections = {};
 
-			// TODO: Load all data upfront or on-demand?
-			// Maybe give user the option to load upfront.
-			// But which should we do by default?
-			/*fs.readdir(dbLocation, function(error, files) {
-				files.forEach(function(file) {
-					var extname = path.extname(file);
-					var filename = file.split('.')[0];
-					if (extname === '.db' && filename.length > 0) {
-						var collectionName = filename;
-						collections[collectionName] = createCollection(collectionName, dbLocation);
-					}
-				});
-				global.CLIENT = new NeDbClient(dbLocation, collections);
-				resolve(global.CLIENT);
-			});*/
-			//global.CLIENT = new NeDbClient(dbLocation, collections);
-			resolve(new NeDbClient(dbLocation, collections));
-		});
-	}
+            // TODO: Load all data upfront or on-demand?
+            // Maybe give user the option to load upfront.
+            // But which should we do by default?
+            /*fs.readdir(dbLocation, function(error, files) {
+            	files.forEach(function(file) {
+            		var extname = path.extname(file);
+            		var filename = file.split('.')[0];
+            		if (extname === '.db' && filename.length > 0) {
+            			var collectionName = filename;
+            			collections[collectionName] = createCollection(collectionName, dbLocation);
+            		}
+            	});
+            	global.CLIENT = new NeDbClient(dbLocation, collections);
+            	resolve(global.CLIENT);
+            });*/
+            //global.CLIENT = new NeDbClient(dbLocation, collections);
+            resolve(new NeDbClient(dbLocation, collections));
+        });
+    }
 
-	close() {
-		// Nothing to do for NeDB
-	}
+    close() {
+        // Nothing to do for NeDB
+    }
 
-	clearCollection(collection) {
+    clearCollection(collection) {
         return this.deleteMany(collection, {});
     }
 
     dropDatabase() {
-    	var that = this;
+        var that = this;
 
-    	var clearPromises = [];
-    	_.keys(this._collections).forEach(function(key) {
-    		var p = new Promise(function(resolve, reject) {
-    			var dbLocation = getCollectionPath(that._path, key);
+        var clearPromises = [];
+        _.keys(this._collections).forEach(function(key) {
+            var p = new Promise(function(resolve, reject) {
+                var dbLocation = getCollectionPath(that._path, key);
 
-    			if (dbLocation === 'memory') {
-    				// Only exists in memory, so just delete the 'Datastore'
-    				delete that._collections[key];
-    				resolve();
-    			} else {
-    				// Delete the file, but only if it exists
-	    			fs.stat(dbLocation, function(err, stat) {
-					    if (err === null) {
-					        fs.unlink(dbLocation, function(err) {
-								if (err) reject(err);
-								delete that._collections[key];
-								resolve();
-							});
-					    } else {
-					    	resolve();
-					    }
-					});
-    			}
-			});
-    		clearPromises.push(p);
-    	});
+                if (dbLocation === 'memory') {
+                    // Only exists in memory, so just delete the 'Datastore'
+                    delete that._collections[key];
+                    resolve();
+                } else {
+                    // Delete the file, but only if it exists
+                    fs.stat(dbLocation, function(err, stat) {
+                        if (err === null) {
+                            fs.unlink(dbLocation, function(err) {
+                                if (err) reject(err);
+                                delete that._collections[key];
+                                resolve();
+                            });
+                        } else {
+                            resolve();
+                        }
+                    });
+                }
+            });
+            clearPromises.push(p);
+        });
 
-    	return Promise.all(clearPromises);
+        return Promise.all(clearPromises);
     }
 
     toCanonicalId(id) {
@@ -312,5 +329,4 @@ export class NeDbClient extends DatabaseClient {
     driver() {
         return this._collections;
     }
-
 }

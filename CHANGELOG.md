@@ -1,3 +1,10 @@
+## 0.12.0 (2016-01-27)
+Features:
+ - Forked project (renamed to crypsis)
+ - Better ES5 Compatibility
+Bugfixes:
+ - "Class constructors cannot be invoked without 'new'" should not be thrown.
+
 ## 0.11.3 (2015-12-29)
 Features:
  - Added new `ValidationError` object

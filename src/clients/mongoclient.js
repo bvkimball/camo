@@ -1,5 +1,3 @@
-"use strict";
-
 import _ from 'lodash';
 import path from 'path';
 import fs from 'fs';
@@ -33,7 +31,11 @@ export class MongoClient extends DatabaseClient {
                     return resolve(result.insertedId);
                 });
             } else {
-                db.updateOne({ _id: id }, { $set: values }, function(error, result) {
+                db.updateOne({
+                    _id: id
+                }, {
+                    $set: values
+                }, function(error, result) {
                     if (error) return reject(error);
                     return resolve();
                 });
@@ -47,7 +49,11 @@ export class MongoClient extends DatabaseClient {
             if (id === null) resolve(0);
 
             var db = that._mongo.collection(collection);
-            db.deleteOne({ _id: id }, {w:1}, function (error, result) {
+            db.deleteOne({
+                _id: id
+            }, {
+                w: 1
+            }, function(error, result) {
                 if (error) return reject(error);
                 return resolve(result.deletedCount);
             });
@@ -59,7 +65,9 @@ export class MongoClient extends DatabaseClient {
         query = castQueryIds(query);
         return new Promise(function(resolve, reject) {
             var db = that._mongo.collection(collection);
-            db.deleteOne(query, {w:1}, function (error, result) {
+            db.deleteOne(query, {
+                w: 1
+            }, function(error, result) {
                 if (error) return reject(error);
                 return resolve(result.deletedCount);
             });
@@ -71,7 +79,9 @@ export class MongoClient extends DatabaseClient {
         query = castQueryIds(query);
         return new Promise(function(resolve, reject) {
             var db = that._mongo.collection(collection);
-            db.deleteMany(query, {w:1}, function (error, result) {
+            db.deleteMany(query, {
+                w: 1
+            }, function(error, result) {
                 if (error) return reject(error);
                 return resolve(result.deletedCount);
             });
@@ -83,7 +93,7 @@ export class MongoClient extends DatabaseClient {
         query = castQueryIds(query);
         return new Promise(function(resolve, reject) {
             var db = that._mongo.collection(collection);
-            db.findOne(query, function (error, doc) {
+            db.findOne(query, function(error, doc) {
                 if (error) return reject(error);
                 return resolve(doc);
             });
@@ -105,9 +115,13 @@ export class MongoClient extends DatabaseClient {
 
             var update = values;
             if (options.upsert) {
-                update = { $setOnInsert: update };
+                update = {
+                    $setOnInsert: update
+                };
             } else {
-                update = { $set: update };
+                update = {
+                    $set: update
+                };
             }
 
             db.findOneAndUpdate(query, update, options, function(error, result) {
@@ -127,7 +141,7 @@ export class MongoClient extends DatabaseClient {
         return new Promise(function(resolve, reject) {
             var db = that._mongo.collection(collection);
 
-            db.findOneAndDelete(query, options, function (error, result) {
+            db.findOneAndDelete(query, options, function(error, result) {
                 if (error) return reject(error);
                 return resolve(result.value === null ? 0 : 1);
             });
@@ -168,7 +182,7 @@ export class MongoClient extends DatabaseClient {
         query = castQueryIds(query);
         return new Promise(function(resolve, reject) {
             var db = that._mongo.collection(collection);
-            db.count(query, function (error, count) {
+            db.count(query, function(error, count) {
                 if (error) return reject(error);
                 return resolve(count);
             });
@@ -184,11 +198,14 @@ export class MongoClient extends DatabaseClient {
 
         var keys = {};
         keys[field] = 1;
-        db.createIndex(keys, {unique: options.unique, sparse: options.sparse});
+        db.createIndex(keys, {
+            unique: options.unique,
+            sparse: options.sparse
+        });
     }
 
     static connect(url, options) {
-        if (typeof(options) === 'undefined') {
+        if (typeof (options) === 'undefined') {
             options = { };
         }
         return new Promise(function(resolve, reject) {

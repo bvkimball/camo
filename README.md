@@ -1,4 +1,4 @@
-# Camo
+# Crypsis
 
 ## Jump To
 * <a href="#why-do-we-need-another-odm">Why do we need another ODM?</a>
@@ -17,27 +17,27 @@
 * <a href="#in-the-wild">In the Wild</a>
 * <a href="#copyright-license">Copyright & License</a>
 
-**Note**: Please see the [CHANGELOG](https://github.com/scottwrobinson/camo/blob/master/CHANGELOG.md) for the latest API changes and bug fixes.
+**Note**: Please see the [CHANGELOG](https://github.com/bvkimball/crypsis/blob/master/CHANGELOG.md) for the latest API changes and bug fixes.
 
 ## Why do we need another ODM?
-Short answer, we probably don't. Camo was created for two reasons: to bring traditional-style classes to [MongoDB](https://www.mongodb.com/) JavaScript, and to support [NeDB](https://github.com/louischatriot/nedb) as a backend (which is much like the SQLite-alternative to Mongo).
+Short answer, we probably don't. Crypsis was created for two reasons: to bring traditional-style classes to [MongoDB](https://www.mongodb.com/) JavaScript, and to support [NeDB](https://github.com/louischatriot/nedb) as a backend (which is much like the SQLite-alternative to Mongo).
 
 Throughout development this eventually turned in to a library full of [ES6](https://github.com/lukehoban/es6features) features. Coming from a Java background, its easier for me to design and write code in terms of classes, and I suspect this is true for many JavaScript beginners. While ES6 classes don't bring any new functionality to the language, they certainly do make it much easier to jump in to OOP with JavaScript, which is reason enough to warrent a new library, IMO.
 
 ## Advantages
-So, why use Camo?
+So, why use Crypsis?
 
-- **ES6**: ES6 features are quickly being added to Node, especially now that it has merged with io.js. With all of these new features being released, Camo is getting a head start in writing tested and proven ES6 code. This also means that native Promises are built-in to Camo, so no more `promisify`-ing your ODM or waiting for Promise support to be added natively.
-- **Easy to use**: While JavaScript is a great language overall, it isn't always the easiest for beginners to pick up. Camo aims to ease that transition by providing familiar-looking classes and a simple interface. Also, there is no need to install a full MongoDB instance to get started thanks to the support of NeDB.
-- **Multiple backends**: Camo was designed and built with multiple Mongo-like backends in mind, like NeDB, LokiJS\*, and TaffyDB\*. With NeDB support, for example, you don't need to install a full MongoDB instance for development or for smaller projects. This also allows you to use Camo in the browser, since databases like NeDB supports in-memory storage.
-- **Lightweight**: Camo is just a very thin wrapper around the backend databases, which mean you won't be sacrificing performance.
+- **ES6**: ES6 features are quickly being added to Node, especially now that it has merged with io.js. With all of these new features being released, Crypsis is getting a head start in writing tested and proven ES6 code. This also means that native Promises are built-in to Crypsis, so no more `promisify`-ing your ODM or waiting for Promise support to be added natively.
+- **Easy to use**: While JavaScript is a great language overall, it isn't always the easiest for beginners to pick up. Crypsis aims to ease that transition by providing familiar-looking classes and a simple interface. Also, there is no need to install a full MongoDB instance to get started thanks to the support of NeDB.
+- **Multiple backends**: Crypsis was designed and built with multiple Mongo-like backends in mind, like NeDB, LokiJS\*, and TaffyDB\*. With NeDB support, for example, you don't need to install a full MongoDB instance for development or for smaller projects. This also allows you to use Crypsis in the browser, since databases like NeDB supports in-memory storage.
+- **Lightweight**: Crypsis is just a very thin wrapper around the backend databases, which mean you won't be sacrificing performance.
 
 \* Support coming soon.
 
 ## Install and Run
-To use Camo, you must first have installed **Node >2.0.x** or **io.js >2.0.x**, then run the following commands:
+To use Crypsis, you must first have installed **Node >2.0.x** or **io.js >2.0.x**, then run the following commands:
 
-	npm install camo --save
+	npm install crypsis --save
 
 And at least ONE of the following:
 
@@ -48,27 +48,25 @@ And at least ONE of the following:
 	npm install mongodb --save
 
 ## Quick Start
-Camo was built with ease-of-use and ES6 in mind, so you might notice it has more of an OOP feel to it than many existing libraries and ODMs. Don't worry, focusing on object-oriented design doesn't mean we forgot about functional techniques or asynchronous programming. Promises are built-in to the API. Just about every call you make interacting with the database (load, save, delete, etc) will return a Promise. No more callback hell :)
-
-For a short tutorial on using Camo, check out [this](http://stackabuse.com/getting-started-with-camo/) article.
+Crypsis was built with ease-of-use and ES6 in mind, so you might notice it has more of an OOP feel to it than many existing libraries and ODMs. Don't worry, focusing on object-oriented design doesn't mean we forgot about functional techniques or asynchronous programming. Promises are built-in to the API. Just about every call you make interacting with the database (load, save, delete, etc) will return a Promise. No more callback hell :)
 
 ### Connect to the Database
-Before using any document methods, you must first connect to your underlying database. All supported databases have their own unique URI string used for connecting. The URI string usually describes the network location or file location of the database. However, some databases support more than just network or file locations. NeDB, for example, supports storing data in-memory, which can be specified to Camo via `nedb://memory`. See below for details:
+Before using any document methods, you must first connect to your underlying database. All supported databases have their own unique URI string used for connecting. The URI string usually describes the network location or file location of the database. However, some databases support more than just network or file locations. NeDB, for example, supports storing data in-memory, which can be specified to Crypsis via `nedb://memory`. See below for details:
 
 - MongoDB:
   - Format: mongodb://[username:password@]host[:port][/db-name]
-  - Example: `var uri = 'mongodb://scott:abc123@localhost:27017/animals';`
+  - Example: `let uri = 'mongodb://bvkimball:abc123@localhost:27017/animals';`
 - NeDB:
   - Format: nedb://[directory-path] OR nedb://memory
-  - Example: `var uri = 'nedb:///Users/scott/data/animals';`
+  - Example: `let uri = 'nedb:///Users/bvkimball/data/animals';`
 
 So to connect to an NeDB database, use the following:
 
 ```javascript
-import { Database } from 'camo';
+import { Database } from 'cypsis';
 
-let uri = 'nedb:///Users/scott/data/animals';
-connect(uri).then(function(db) {
+let uri = 'nedb:///Users/bvkimball/data/animals';
+Database.connect(uri).then(function(db) {
     console.log('Connected');
 });
 ```
@@ -77,11 +75,11 @@ connect(uri).then(function(db) {
 All models must inherit from the `Document` class, which handles much of the interface to your backend NoSQL database.
 
 ```javascript
-import { Document } from 'camo';
+import { Document } from 'crypsis';
 
 class Company extends Document {
     constructor() {
-        super();
+        super('companies');
 
         this.name = String;
         this.valuation = {
@@ -95,16 +93,12 @@ class Company extends Document {
         	default: Date.now
         };
     }
-
-    static collectionName() {
-        return 'companies';
-    }
 }
 ```
 
 Notice how the schema is declared right in the constructor as member variables. All _public_ member variables (variables that don't start with an underscore `[_]`) are added to the schema.
 
-The name of the collection can be set by overriding the `static collectionName()` method, which should return the desired collection name as a string. If one isn't given, then Camo uses the name of the class and naively appends an 's' to the end to make it plural.
+The name of the collection can be set by overriding the `static collectionName()` method, which should return the desired collection name as a string. If one isn't given, then Crypsis uses the name of the class and naively appends an 's' to the end to make it plural.
 
 Schemas can also be defined using the `schema()` method. For example, in the `constructor()` method you could use:
 
@@ -136,7 +130,7 @@ Currently supported variable types are:
 - `EmbeddedDocument`
 - Document Reference
 
-Arrays can either be declared as either un-typed (using `Array` or `[]`), or typed (using the `[TYPE]` syntax, like `[String]`). Typed arrays are enforced by Camo on `.save()` and an `Error` will be thrown if a value of the wrong type is saved in the array. Arrays of references are also supported.
+Arrays can either be declared as either un-typed (using `Array` or `[]`), or typed (using the `[TYPE]` syntax, like `[String]`). Typed arrays are enforced by Crypsis on `.save()` and an `Error` will be thrown if a value of the wrong type is saved in the array. Arrays of references are also supported.
 
 To declare a member variable in the schema, either directly assign it one of the types listed above, or assign it an object with options, like this:
 
@@ -194,8 +188,7 @@ class Person extends Document {
 Embedded documents can also be used within `Document`s. You must declare them separately from the main `Document` that it is being used in. `EmbeddedDocument`s are good for when you need an `Object`, but also need enforced schemas, validation, defaults, hooks, and member functions. All of the options (type, default, min, etc) mentioned above work on `EmbeddedDocument`s as well.
 
 ```javascript
-var Document = require('camo').Document;
-var EmbeddedDocument = require('camo').EmbeddedDocument;
+import { Document,EmbeddedDocument } from 'crypsis';
 
 class Money extends EmbeddedDocument {
     constructor() {
@@ -235,7 +228,7 @@ wallet.save().then(function() {
 To create a new instance of our document, we need to use the `.create()` method, which handles all of the construction for us.
 
 ```javascript
-var lassie = Dog.create({
+let lassie = Dog.create({
     name: 'Lassie',
     breed: 'Collie'
 });
@@ -314,7 +307,7 @@ Dog.count({ breed: 'Collie' }).then(function(count) {
 ```
 
 ### Hooks
-Camo provides hooks for you to execute code before and after critical parts of your database interactions. For each hook you use, you may return a value (which, as of now, will be discarded) or a Promise for executing asynchronous code. Using Promises throughout Camo allows us to not have to provide separate async and sync hooks, thus making your code simpler and easier to understand.
+Crypsis provides hooks for you to execute code before and after critical parts of your database interactions. For each hook you use, you may return a value (which, as of now, will be discarded) or a Promise for executing asynchronous code. Using Promises throughout Crypsis allows us to not have to provide separate async and sync hooks, thus making your code simpler and easier to understand.
 
 Hooks can be used not only on `Document` objects, but `EmbeddedDocument` objects as well. The embedded object's hooks will be called when it's parent `Document` is saved/validated/deleted (depending on the hook you provide).
 
@@ -360,16 +353,11 @@ The code above shows a pre-delete hook that deletes all the employees of the com
 **Note**: The `.preDelete()` and `.postDelete()` hooks are _only_ called when calling `.delete()` on a Document instance. Calling `.deleteOne()` or `.deleteMany()` will **not** trigger the hook methods.
 
 ### Misc.
-- `camo.getClient()`: Retrieves the Camo database client
-- `camo.getClient().driver()`: Retrieves the underlying database driver (`MongoClient` or a map of NeDB collections)
+- `crypsis.getClient()`: Retrieves the Crypsis database client
+- `crypsis.getClient().driver()`: Retrieves the underlying database driver (`MongoClient` or a map of NeDB collections)
 - `Document.toJSON()`: Serializes the given document to just the data, which includes nested and referenced data
 
-## In the Wild
-Camo was created during the development of [Polymetrics](https://polymetrics.io/). It replaced the original models created with Mongoose, which ended up saving us a lot of time and headaches during design and testing.
-
-Are you using Camo in a public-facing app/website? [Let us know](mailto:s.w.robinson@gmail.com) and we'll post it here!
-
-## Copyright & License
+## Original Copyright & License
 Copyright (c) 2015 Scott Robinson
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

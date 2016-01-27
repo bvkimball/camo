@@ -1,5 +1,3 @@
-"use strict";
-
 import _ from 'lodash';
 import { Connection as DB } from './db';
 import { BaseDocument } from './base-document';
