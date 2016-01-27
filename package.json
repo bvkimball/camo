@@ -38,6 +38,9 @@
     "prepublish": "npm run compile",
     "test": "mocha --compilers js:babel-register test/*.js"
   },
+  "publishConfig":{
+    "registry": "https://registry.npmjs.org"
+  },
   "engines": {
     "iojs": "~2.2.1",
     "node": ">=2.0.0"
