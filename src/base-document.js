@@ -130,7 +130,7 @@ export class BaseDocument {
 
             this._proxy(k);
         });
-        //this._proxy('id');
+        this._proxy('id');
     }
 
     _proxy(field) {
@@ -145,11 +145,20 @@ export class BaseDocument {
                         return f.default;
                     }
                 }
+                // Alias 'id' and '_id'
+                if (field === 'id') {
+                    return this._id;
+                }
                 return this[field];
             },
             set: function(value) {
                 if (field in this._schema) {
                     this._values[field] = value;
+                    return true;
+                }
+                // Alias 'id' and '_id'
+                if (field === 'id') {
+                    this._id = value;
                     return true;
                 }
                 return false;
