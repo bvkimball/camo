@@ -26,7 +26,7 @@ export class BaseDocument {
         this._schema = { // Defines document structure/properties
             _id: {
                 type: DB().nativeIdType()
-            }, // Native ID to backend database
+            } // Native ID to backend database
         };
         this._values = {};
 
@@ -130,7 +130,7 @@ export class BaseDocument {
 
             this._proxy(k);
         });
-        this._proxy('id');
+        //this._proxy('id');
     }
 
     _proxy(field) {
@@ -145,10 +145,7 @@ export class BaseDocument {
                         return f.default;
                     }
                 }
-                // Alias 'id' and '_id'
-                if (field === 'id') {
-                    return this._id;
-                }
+
                 return this[field];
             },
             set: function(value) {
@@ -156,11 +153,7 @@ export class BaseDocument {
                     this._values[field] = value;
                     return true;
                 }
-                // Alias 'id' and '_id'
-                if (field === 'id') {
-                    this._id = value;
-                    return true;
-                }
+                
                 return false;
             },
             configurable: true,
@@ -304,6 +297,7 @@ export class BaseDocument {
                 } else {
                     value = d[key];
                 }
+                console.log('From data', key, value);
 
                 // If its not in the schema, we don't care about it... right?
                 if (key in instance._schema) {
