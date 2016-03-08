@@ -279,19 +279,19 @@ var castIdArray = function(vals) {
  * TODO: Should we check for $not operator?
  */
 var castQueryIds = function(query) {
-    deepTraverse(query, function(key, val, parent) {
-        if (key === '_id') {
-            if (String(parent[key]).match(/^[a-fA-F0-9]{24}$/)) {
-                parent[key] = castId(parent[key]);
-            } else if (isObject(parent[key]) && _.has(parent[key], '$in')) {
+    //no need to deep traverse
+    for ( let key of _.keys(query) ) {
+        if ( query.hasOwnProperty(key) ) {
+            if (String(query[key]).match(/^[a-fA-F0-9]{24}$/)) {
+                query[key] = castId(query[key]);
+            } else if (isObject(query[key]) && _.has(query[key], '$in')) {
                 // { _id: { '$in': [ 'K1cbMk7T8A0OU83IAT4dFa91', 'Y1cbak7T8A1OU83IBT6aPq11' ] } }
-                parent[key].$in = castIdArray(parent[key].$in);
-            } else if (isObject(parent[key]) && _.has(parent[key], '$nin')) {
+                query[key].$in = castIdArray(query[key].$in);
+            } else if (isObject(query[key]) && _.has(query[key], '$nin')) {
                 // { _id: { '$nin': [ 'K1cbMk7T8A0OU83IAT4dFa91', 'Y1cbak7T8A1OU83IBT6aPq11' ] } }
-                parent[key].$nin = castIdArray(parent[key].$nin);
+                query[key].$nin = castIdArray(query[key].$nin);
             }
         }
-    });
-
+    }
     return query;
 };
