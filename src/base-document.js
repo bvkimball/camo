@@ -153,7 +153,7 @@ export class BaseDocument {
                     this._values[field] = value;
                     return true;
                 }
-                
+
                 return false;
             },
             configurable: true,
@@ -297,8 +297,6 @@ export class BaseDocument {
                 } else {
                     value = d[key];
                 }
-                console.log('From data', key, value);
-
                 // If its not in the schema, we don't care about it... right?
                 if (key in instance._schema) {
                     var type = instance._schema[key].type;
