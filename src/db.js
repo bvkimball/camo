@@ -17,6 +17,12 @@ export class Database {
                 CLIENT = db;
                 return db;
             });
+        } else if (url.indexOf('rethinkdb://') > -1) {
+            // url example: 'mongodb://localhost:27017/myproject'
+            return RethinkClient.connect(url, options).then(function(db) {
+                CLIENT = db;
+                return db;
+            });
         } else {
             return Promise.reject(new Error('Unrecognized DB connection url.'));
         }

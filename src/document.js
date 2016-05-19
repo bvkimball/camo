@@ -37,10 +37,8 @@ export class Document extends BaseDocument {
     }
 
     save() {
-        var preValidatePromises = this._getHookPromises('preValidate');
-
-        return Promise.all(preValidatePromises).then(() => {
-
+        var preValidatePromises = [].concat(...this._getHookPromises('preValidate'));
+        return Promise.all(preValidatePromises).then((res) => {
             // Ensure we at least have defaults set
 
             // TODO: We already do this on .create(), so
@@ -50,10 +48,10 @@ export class Document extends BaseDocument {
                     this[key] = this.getDefault(key);
                 }
             });
-
+            
             // Validate the assigned type, choices, and min/max
             this.validate();
-
+            
             // Ensure all data types are saved in the same encodings
             this.canonicalize();
 
@@ -65,7 +63,7 @@ export class Document extends BaseDocument {
             var toUpdate = this._toData({
                 _id: false
             });
-
+            
             // Reference our objects
             _.keys(this._schema).forEach((key) => {
                 // Never care about _id
@@ -83,14 +81,14 @@ export class Document extends BaseDocument {
                             if (DB().isNativeId(v)) {
                                 toUpdate[key].push(v);
                             } else {
-                                toUpdate[key].push(v._id);
+                                toUpdate[key].push(DB().toNativeId(v._id));
                             }
                         });
                     } else {
                         if (DB().isNativeId(this[key])) {
                             toUpdate[key] = this[key];
                         } else {
-                            toUpdate[key] = this[key]._id;
+                            toUpdate[key] = DB().toNativeId(this[key]._id);
                         }
                     }
 
@@ -116,16 +114,15 @@ export class Document extends BaseDocument {
 
                 }
             });
-
             return toUpdate;
         }).then((data) => {
             // TODO: hack?
-            var postValidatePromises = [data].concat(this._getHookPromises('postValidate'));
+            var postValidatePromises = [data].concat(...this._getHookPromises('postValidate'));
             return Promise.all(postValidatePromises);
         }).then((prevData) => {
             var data = prevData[0];
             // TODO: hack?
-            var preSavePromises = [data].concat(this._getHookPromises('preSave'));
+            var preSavePromises = [data].concat(...this._getHookPromises('preSave'));
             return Promise.all(preSavePromises);
         }).then((prevData) => {
             var data = prevData[0];

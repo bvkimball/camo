@@ -17,7 +17,6 @@ export class MongoClient extends DatabaseClient {
         var that = this;
         return new Promise(function(resolve, reject) {
             var db = that._mongo.collection(collection);
-
             // TODO: I'd like to just use update with upsert:true, but I'm
             // note sure how the query will work if id == null. Seemed to
             // have some problems before with passing null ids.
@@ -31,8 +30,8 @@ export class MongoClient extends DatabaseClient {
                     return resolve(result.insertedId);
                 });
             } else {
-                db.updateOne({
-                    _id: id
+                db.update({
+                    _id: castId(id)
                 }, {
                     $set: values
                 }, function(error, result) {
@@ -264,7 +263,7 @@ export class MongoClient extends DatabaseClient {
 }
 
 var castId = function(val) {
-    return new ObjectId(val);
+    return (val instanceof ObjectId) ? val : new ObjectId(val);
 };
 
 var castIdArray = function(vals) {

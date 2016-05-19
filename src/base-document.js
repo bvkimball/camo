@@ -565,7 +565,7 @@ export class BaseDocument {
 
         var hookPromises = [];
         hookPromises = hookPromises.concat(_.invoke(embeddeds, hookName));
-        hookPromises.push(_.invoke([this], hookName));
+        hookPromises.unshift(_.invoke([this], hookName));
         return hookPromises;
     }
 }
