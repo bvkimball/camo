@@ -152,7 +152,8 @@ export class MongoClient extends DatabaseClient {
         query = castQueryIds(query);
         return new Promise(function(resolve, reject) {
             var db = that._mongo.collection(collection);
-            var cursor = db.find(query);
+            var fields = options.fields || {};
+            var cursor = db.find(query, fields);
             if (typeof options.sort === 'string') {
                 var sortOrder = 1;
                 if (options.sort[0] === '-') {
